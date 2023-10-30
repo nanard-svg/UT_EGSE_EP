@@ -14,7 +14,10 @@
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/fifo_pipe_out_w32_1024_r32_1024/fifo_pipe_out_w32_1024_r32_1024_stub.vhdl" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_stub.vhdl" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/ila_0/ila_0_stub.vhdl" Library="not mapped"/>
+  <Mappings Location="Simulation/USB2/VHDL" Library="not mapped"/>
+  <Mappings Location="Simulation/USB3/VHDL" Library="not mapped"/>
   <Mappings Location="sources_XEM7010-VHDL/Counters_work.vhd" Library="not mapped"/>
   <Mappings Location="Common Libraries/STD" Library="std"/>
   <Mappings Location="" Library="work"/>
+  <Mappings Location="Simulation/USB3/VHDL/sim_tf.vhd" Library="work"/>
 </com.sigasi.hdt.shared.librarymapping.model:LibraryMappings>

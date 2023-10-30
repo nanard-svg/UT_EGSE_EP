@@ -25,7 +25,7 @@ entity UT_EGSE is
         okUH     : in    STD_LOGIC_VECTOR(4 downto 0);
         okHU     : out   STD_LOGIC_VECTOR(2 downto 0);
         okUHU    : inout STD_LOGIC_VECTOR(31 downto 0);
-        okAA     : inout STD_LOGIC;
+        --okAA     : inout STD_LOGIC;
         sys_clkp : in    STD_LOGIC;
         sys_clkn : in    STD_LOGIC;
         led      : out   STD_LOGIC_VECTOR(7 downto 0)
@@ -188,7 +188,7 @@ begin
             okUH  => okUH,
             okHU  => okHU,
             okUHU => okUHU,
-            okAA  => okAA,              --removed for simulation
+            --okAA  => okAA,              --removed for simulation
             okClk => okClk,
             okHE  => okHE,
             okEH  => okEH
