@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<com.sigasi.hdt.shared.librarymapping.model:LibraryMappings xmlns:com.sigasi.hdt.shared.librarymapping.model="com.sigasi.hdt.vhdl.scoping.librarymapping" Version="2">
+  <Mappings Location="Common Libraries/IEEE" Library="ieee"/>
+  <Mappings Location="Common Libraries/IEEE Synopsys" Library="ieee"/>
+  <Mappings Location="Common Libraries" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.cache" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_sim_netlist.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_1024_r32_1024/fifo_pipe_out_w32_1024_r32_1024_sim_netlist.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_1024_r32_1024/synth/fifo_pipe_out_w32_1024_r32_1024.vhd" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_sim_netlist.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_2048_r32_2048/synth/fifo_pipe_out_w32_2048_r32_2048.vhd" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/ila_0/ila_0_sim_netlist.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/clk_wiz_0/clk_wiz_0_stub.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/fifo_pipe_out_w32_1024_r32_1024/fifo_pipe_out_w32_1024_r32_1024_stub.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_stub.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/ila_0/ila_0_stub.vhdl" Library="not mapped"/>
+  <Mappings Location="sources_XEM7010-VHDL/Counters_work.vhd" Library="not mapped"/>
+  <Mappings Location="Common Libraries/STD" Library="std"/>
+  <Mappings Location="" Library="work"/>
+</com.sigasi.hdt.shared.librarymapping.model:LibraryMappings>
