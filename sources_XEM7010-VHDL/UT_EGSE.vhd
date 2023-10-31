@@ -22,13 +22,14 @@ use UNISIM.vcomponents.all;
 
 entity UT_EGSE is
     port(
-        okUH     : in    STD_LOGIC_VECTOR(4 downto 0);
-        okHU     : out   STD_LOGIC_VECTOR(2 downto 0);
-        okUHU    : inout STD_LOGIC_VECTOR(31 downto 0);
-        --okAA     : inout STD_LOGIC;
-        sys_clkp : in    STD_LOGIC;
-        sys_clkn : in    STD_LOGIC;
-        led      : out   STD_LOGIC_VECTOR(7 downto 0)
+        okUH      : in    STD_LOGIC_VECTOR(4 downto 0);
+        okHU      : out   STD_LOGIC_VECTOR(2 downto 0);
+        okUHU     : inout STD_LOGIC_VECTOR(31 downto 0);
+        okAA      : inout STD_LOGIC;    --removed for simulation
+        sys_clkp  : in    STD_LOGIC;
+        sys_clkn  : in    STD_LOGIC;
+        led       : out   STD_LOGIC_VECTOR(7 downto 0);
+        clk_60Mhz : out   STD_LOGIC
     );
 end UT_EGSE;
 
@@ -175,6 +176,7 @@ begin
     label_clk_mmcm : entity work.clk_wiz_0
         port map(
             clk_out1  => sys_clk,
+            clk_out2  => clk_60Mhz,
             locked    => locked,
             clk_in1_p => sys_clkp,
             clk_in1_n => sys_clkn
@@ -188,7 +190,7 @@ begin
             okUH  => okUH,
             okHU  => okHU,
             okUHU => okUHU,
-            --okAA  => okAA,              --removed for simulation
+            okAA  => okAA,              --removed for simulation
             okClk => okClk,
             okHE  => okHE,
             okEH  => okEH

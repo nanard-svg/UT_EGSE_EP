@@ -108,3 +108,6 @@ set_property PACKAGE_PIN A16 [get_ports {led[5]}]
 set_property PACKAGE_PIN B16 [get_ports {led[6]}]
 set_property PACKAGE_PIN B17 [get_ports {led[7]}]
 set_property IOSTANDARD LVCMOS15 [get_ports {led[*]}]
+
+set_property PACKAGE_PIN K3 [get_ports {clk_60Mhz}]
+set_property IOSTANDARD LVCMOS33 [get_ports {clk_60Mhz}]
