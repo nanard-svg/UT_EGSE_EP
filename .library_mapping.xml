@@ -10,6 +10,7 @@
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_sim_netlist.vhdl" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_2048_r32_2048/synth/fifo_pipe_out_w32_2048_r32_2048.vhd" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/ila_0/ila_0_sim_netlist.vhdl" Library="not mapped"/>
+  <Mappings Location="Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/raw_data_fifo/raw_data_fifo_sim_netlist.vhdl" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/clk_wiz_0/clk_wiz_0_stub.vhdl" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/fifo_pipe_out_w32_1024_r32_1024/fifo_pipe_out_w32_1024_r32_1024_stub.vhdl" Library="not mapped"/>
   <Mappings Location="Projet_Vivado/UT_EGSE_EP.ip_user_files/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_stub.vhdl" Library="not mapped"/>

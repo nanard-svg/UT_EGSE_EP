@@ -66,6 +66,12 @@ set_property IOSTANDARD LVCMOS18 [get_ports {okUHU[*]}]
 set_property PACKAGE_PIN N13 [get_ports {okAA}]
 set_property IOSTANDARD LVCMOS18 [get_ports {okAA}]
 
+create_clock -name okUH0 -period 9.920 [get_ports {okUH[0]}]
+
+create_clock -period 50.000 -name clk_out1_clk_wiz_0 -waveform {0.000 25.000}
+create_clock -period 17.000 -name clk_out2_clk_wiz_0 -waveform {0.000 8.500}
+set_clock_groups -asynchronous -group [get_clocks {clk_out1_clk_wiz_0}] -group [get_clocks {mmcm0_clk0 okUH0}]
+set_clock_groups -asynchronous -group [get_clocks {clk_out2_clk_wiz_0}] -group [get_clocks {mmcm0_clk0 okUH0}]
 
 create_clock -name okUH0 -period 9.920 [get_ports {okUH[0]}]
 
@@ -95,8 +101,10 @@ set_property PACKAGE_PIN W12 [get_ports {sys_clkn}]
 
 set_property DIFF_TERM FALSE [get_ports {sys_clkp}]
 
-create_clock -name sys_clk -period 5 [get_ports sys_clkp]
-set_clock_groups -asynchronous -group [get_clocks {sys_clk}] -group [get_clocks {mmcm0_clk0 okUH0}]
+create_clock -period 5.000 [get_ports clk_in1_p_clk_wiz_0]
+set_input_jitter [get_clocks -of_objects [get_ports clk_in1_p_clk_wiz_0]] 0.05
+
+set_property PHASESHIFT_MODE WAVEFORM [get_cells -hierarchical *adv*]
 
 # LEDs #####################################################################
 set_property PACKAGE_PIN A13 [get_ports {led[0]}]
@@ -109,5 +117,8 @@ set_property PACKAGE_PIN B16 [get_ports {led[6]}]
 set_property PACKAGE_PIN B17 [get_ports {led[7]}]
 set_property IOSTANDARD LVCMOS15 [get_ports {led[*]}]
 
-set_property PACKAGE_PIN K3 [get_ports {clk_60Mhz}]
-set_property IOSTANDARD LVCMOS33 [get_ports {clk_60Mhz}]
+#set_property PACKAGE_PIN K3 [get_ports {clk_60Mhz}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {clk_60Mhz}]
+
+
+

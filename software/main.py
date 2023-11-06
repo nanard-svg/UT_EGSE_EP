@@ -1,18 +1,17 @@
 import ok
 import time
 import array as arr
+
+import math
+import matplotlib.pyplot as plt
 import numpy as np
 
 count = 0
 count_data = 0
-#list_pipe_in = arr.array('l',[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31])
 
-
-
-list_pipe_in = np.linspace(0,511,512).astype(int)
-list_pipe_in_inv = np.linspace(511,0,512).astype(int)
-flip_flop=0
-list_pipe_out = np.ones(512).astype(int)
+#list_pipe_in = np.linspace(0,511,512).astype(int)
+list_pipe_in = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ,14 ,15 ,16 ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,0])
+array_pipe_out = np.ones(2048).astype(int)
 
 #################################################
 #list_pipe_in = np.array(ma_liste)
@@ -66,6 +65,10 @@ class DESTester:
 		self.xem.SetWireInValue(0x00, 0x00)
 		self.xem.UpdateWireIns()
 
+	def start_capture(self):
+		self.xem.SetWireInValue(0x00, 0x02)
+		self.xem.UpdateWireIns()
+
 	def setwire(self):
 
 		self.xem.SetWireInValue(0x01, count_data)
@@ -80,8 +83,8 @@ class DESTester:
 		self.xem.WriteToPipeIn(adresse, list_pipe_in)
 
 	def getpipeout(self):
-		self.xem.ReadFromPipeOut(0xA1,list_pipe_out)
-		return(list_pipe_out)
+		self.xem.ReadFromPipeOut(0xA1,array_pipe_out)
+		return(array_pipe_out)
 
 
 
@@ -98,50 +101,25 @@ des.ResetDES()
 time.sleep(3)
 print ("unRESET")
 des.unResetDES()
-time.sleep(1)
-while count_data < 10 :
-	count_data=count_data+1
-
-	# write wire in
-	des.setwire()
-	# waiting time
-	time.sleep(0.003)
-
-	#read wire out
-	get=des.getwire()
-	print("valeur lue sur le wire out:%s"%(get))
-
-time.sleep(1)
-
-count_data = 0
-#print pipe in
-while count_data < 1000 :
-	count_data = count_data + 1
-	adresse=0x80
-
-	if flip_flop == 0 :
-
-		des.setpipein(list_pipe_in,adresse)
-		print(list_pipe_in.itemsize)
-		print(len(list_pipe_in))
-		flip_flop=1
-	else :
-		des.setpipein(list_pipe_in_inv,adresse)
-		print(list_pipe_in.itemsize)
-		print(len(list_pipe_in))
-		flip_flop=0
-
-	# print pipe out
-	#time.sleep(0.1)
-	des.getpipeout()
-	print(list_pipe_out.itemsize)
-	print(len(list_pipe_out))
-	print(list_pipe_out)
-
-adresse=0x81
+print ("set trigger_level")
+count_data=15
+des.setwire()
+print ("start_capture")
+des.start_capture()
+print ("injection")
+adresse=0x80
 des.setpipein(list_pipe_in,adresse)
-time.sleep(5)
-des.setpipein(list_pipe_in_inv,adresse)
+print ("read pipe out")
+#time.sleep(0.1)
+des.getpipeout()
+print(array_pipe_out.itemsize)
+print(array_pipe_out)
+list_array_pipe_out = list(array_pipe_out)
 
+print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out))
+print("min",min(list_array_pipe_out))
+print("max",max(list_array_pipe_out))
+plt.plot(list_array_pipe_out)
+plt.show()
 
 print("script done")

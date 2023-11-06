@@ -54,7 +54,7 @@ architecture simulate of SIM_TEST is
 
     -- okHostCalls Simulation Parameters & Signals ----------------------------------------------
     constant tCK      : time := 5 ns;   --Half of the hi_clk frequency @ 1ns timing = 100MHz
-    constant Tsys_clk : time := 5 ns;   --Half of the hi_clk frequency @ 1ns timing = 100MHz
+    constant Tsys_clk : time := 2.5 ns;   --Half of the hi_clk frequency @ 1ns timing = 100MHz
 
     signal hi_clk     : std_logic;
     signal hi_drive   : std_logic                     := '0';
@@ -74,7 +74,9 @@ architecture simulate of SIM_TEST is
     signal pipeInSize_count : integer;
     signal Reset            : std_logic;
 
-    signal WireOutValue : std_logic_vector(31 downto 0);
+    signal WireOutValue            : std_logic_vector(31 downto 0);
+    signal pipeIn_signal_config    : PIPEIN_ARRAY;
+    signal pipeInSize_count_config : integer;
 
     ---------------------------------------------------------------------------------------------
 
@@ -134,22 +136,22 @@ begin
 
     Reset <= '1', '0' after 100 ns;
 
-    label_read_file : process
+    label_read_file_injection : process
         ------------------------------------------------------------------
 
         file DONNEES      : text;
         variable MY_LINE  : line;
-        variable data     : std_logic_vector(31 downto 0);
+        variable data     : std_logic_vector(15 downto 0);
         variable i_signal : integer;
         -------------------------------------------------------------------
 
     begin                               -------------begin of process-----
-        file_open(DONNEES, "fake_pulse_CBE.txt", read_mode);
+        file_open(DONNEES, "Signal_ADC.txt", read_mode);
         --ep_write  <= '0';
         --ep_dataout    <= (others => '0');
         i_signal         := 0;
         pipeInSize_count <= 0;
-        wait until reset = '0' and reset'event;
+        wait until Reset = '0' and Reset'event;
 
         loop
 
@@ -164,10 +166,52 @@ begin
                 i_signal                := i_signal + 1;
                 pipeIn_signal(i_signal) <= data(15 downto 8);
                 i_signal                := i_signal + 1;
-                pipeIn_signal(i_signal) <= data(23 downto 16);
+                pipeIn_signal(i_signal) <= (others => '0');
                 i_signal                := i_signal + 1;
-                pipeIn_signal(i_signal) <= data(31 downto 24);
+                pipeIn_signal(i_signal) <= (others => '0');
                 i_signal                := i_signal + 1;
+            else
+            --ep_write  <= '0';
+            end if;
+
+        end loop;                       ---------
+
+    end process;
+
+    label_read_file_config : process
+        ------------------------------------------------------------------
+
+        file DONNEES      : text;
+        variable MY_LINE  : line;
+        variable data     : std_logic_vector(15 downto 0);
+        variable i_signal : integer;
+        -------------------------------------------------------------------
+
+    begin                               -------------begin of process-----
+        file_open(DONNEES, "coef.txt", read_mode);
+        --ep_write  <= '0';
+        --ep_dataout    <= (others => '0');
+        i_signal                := 0;
+        pipeInSize_count_config <= 0;
+        wait until Reset = '0' and Reset'event;
+
+        loop
+
+            wait until (hi_clk = '1' and hi_clk'event);
+
+            if (not endfile(DONNEES)) then
+                --ep_write  <= '1';  
+                readline(DONNEES, MY_LINE);
+                hread(MY_LINE, data);
+                pipeInSize_count_config        <= pipeInSize_count_config + 1;
+                pipeIn_signal_config(i_signal) <= data(7 downto 0);
+                i_signal                       := i_signal + 1;
+                pipeIn_signal_config(i_signal) <= data(15 downto 8);
+                i_signal                       := i_signal + 1;
+                pipeIn_signal_config(i_signal) <= (others => '0');
+                i_signal                       := i_signal + 1;
+                pipeIn_signal_config(i_signal) <= (others => '0');
+                i_signal                       := i_signal + 1;
             else
             --ep_write  <= '0';
             end if;
@@ -832,7 +876,7 @@ begin
             ActivateTriggerIn(x"40", mode);
 
             -- Read values
-            ReadFromPipeOut(x"a0", pipeOutSize);
+            ReadFromPipeOut(x"A1", pipeOutSize);
             -- Display values
             if mode = MODE_LFSR then
                 write(msg_line, STRING'("PipeOut LFSR excerpt: "));
@@ -901,49 +945,40 @@ begin
         FrontPanelReset;
         wait for 1 ns;
 
-        -- Reset LFSR
-        SetWireInValue(x"00", x"0000_0001", NO_MASK);
+        
+        SetWireInValue(x"00", x"0000_0001", NO_MASK);   -- Reset all design
         UpdateWireIns;
-        SetWireInValue(x"00", x"0000_0000", NO_MASK);
+        SetWireInValue(x"00", x"0000_0000", NO_MASK);   -- unReset all design 
         UpdateWireIns;
-
-        --	for j in 0 to 2 loop
-        --		-- Select mode as LFSR to periodically read pseudo-random values
-        --		Check_LFSR(MODE_LFSR);
-        --
-        --		-- Select mode as Counter
-        --		Check_LFSR(MODE_Counter);
-        --	end loop;
-
-        --	-- Read LFSR values in sequence using pipes
-        --	Check_PipeOut(MODE_LFSR);
-        --
-        --	-- Read Counter values in sequence using pipes
-        --	Check_PipeOut(MODE_COUNTER);
+        wait for 700 us;    -- write raw data fifo almost full 
+        
+        
         wait for 10 us;
-
-        -- conf         
-        wait for 10 us;
-        pipeIn := pipeIn_signal;
-        WriteToPipeIn(x"80", pipeInSize_count * 4);
+        pipeIn := pipeIn_signal_config;
+        WriteToPipeIn(x"81", pipeInSize_count_config * 4); --  0x80 config
 
         wait for 10 us;
         -- apply all
-        SetWireInValue(x"01", x"4000_0004", NO_MASK);
-        UpdateWireIns;
+        SetWireInValue(x"01", x"0000_0100", NO_MASK); -- set trig
+        UpdateWireIns; 
+        
+        SetWireInValue(x"00", x"0000_0002", NO_MASK);   -- start capture and unReset all design 
+        UpdateWireIns;        
 
-        wait for 1000 ns;
-        SetWireInValue(x"01", x"0000_0000", NO_MASK);
-        UpdateWireIns;
+        wait for 1 us;
+        pipeIn := pipeIn_signal;
+        WriteToPipeIn(x"80", pipeInSize_count * 4); --  0x80 injection 
+
 
         wait for 10 us;
 
         --WireOutValue <= GetWireOutValue(x"01");
         UpdateWireOuts;
 
-        wait for 10 us;
+        wait for 100 us;
 
-        ReadFromPipeOut(x"A1", 64);
+        --ReadFromPipeOut(x"A1", 128);
+        Check_PipeOut(MODE_LFSR);
 
         wait;
 
