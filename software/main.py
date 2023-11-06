@@ -116,6 +116,12 @@ print(array_pipe_out.itemsize)
 print(array_pipe_out)
 list_array_pipe_out = list(array_pipe_out)
 
+print("inject_coef")
+adresse=0x81
+des.setpipein(list_pipe_in,adresse)
+
+
+
 print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out))
 print("min",min(list_array_pipe_out))
 print("max",max(list_array_pipe_out))
