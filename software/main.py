@@ -8,10 +8,16 @@ import numpy as np
 
 count = 0
 count_data = 0
+ligne = 0
+i = 0
+lignes = []
+#list_pipe_in_array = np.ones(2048).astype(int)
 
 #list_pipe_in = np.linspace(0,511,512).astype(int)
-list_pipe_in = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ,14 ,15 ,16 ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,0])
-array_pipe_out = np.ones(2048).astype(int)
+#list_pipe_in_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ,14 ,15 ,16 ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,0,-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13 ,-14 ,-15 ,-16 ,-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,0])
+
+
+array_pipe_out = np.ones(256).astype(int)
 
 #################################################
 #list_pipe_in = np.array(ma_liste)
@@ -96,32 +102,51 @@ if (False == des.InitializeDevice()):
 	exit
 print ("------------------------------------------------------------")
 time.sleep(1)
+############################################################################################
 print ("RESET")
 des.ResetDES()
 time.sleep(3)
 print ("unRESET")
 des.unResetDES()
+############################################################################################
 print ("set trigger_level")
 count_data=15
 des.setwire()
 print ("start_capture")
 des.start_capture()
+############################################################################################
 print ("injection")
+file = open('Signal_ADC.txt', "r")
+lines = file.readlines()
+formated_lines = []
+for elm in lines :
+	formated_lines.append(int(elm[:-1]))
+	#formated_lines.append(elm[:-1])
+
+print("la liste est \n {}".format(formated_lines))
+list_pipe_in_array = np.array(formated_lines)
+print("le tableau est \n {}".format(list_pipe_in_array))
+
+#print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
+
 adresse=0x80
-des.setpipein(list_pipe_in,adresse)
+des.setpipein(list_pipe_in_array,adresse)
+############################################################################################
 print ("read pipe out")
 #time.sleep(0.1)
 des.getpipeout()
 print(array_pipe_out.itemsize)
 print(array_pipe_out)
 list_array_pipe_out = list(array_pipe_out)
-
 print("inject_coef")
-adresse=0x81
-des.setpipein(list_pipe_in,adresse)
-
-
-
+#adresse=0x81
+#des.setpipein(list_pipe_in,adresse)
+############################################################################################
+file = open("list_array_pipe_out.data", "w")
+for items in list_array_pipe_out:
+	file.write('%s\n' %items)
+file.close()
+#############################################################################################
 print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out))
 print("min",min(list_array_pipe_out))
 print("max",max(list_array_pipe_out))
