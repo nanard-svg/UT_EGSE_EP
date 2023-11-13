@@ -17,7 +17,7 @@ lignes = []
 #list_pipe_in_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ,14 ,15 ,16 ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,0,-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13 ,-14 ,-15 ,-16 ,-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,0])
 
 
-array_pipe_out = np.ones(256).astype(int)
+array_pipe_out = np.ones(512).astype(int)
 
 #################################################
 #list_pipe_in = np.array(ma_liste)
@@ -108,13 +108,35 @@ des.ResetDES()
 time.sleep(3)
 print ("unRESET")
 des.unResetDES()
+
+
+############################################################################################
+print ("Coef")
+file = open('coef_V2.txt', "r")
+lines_coef = file.readlines()
+formated_lines_coef = []
+for elm in lines_coef :
+	formated_lines_coef.append(int(elm[:-1]))##la liste lines a des eleementr ascii dont on supprime\n avec :-1
+	#formated_lines.append(elm[:-1])
+
+print("la liste coef est \n {}".format(formated_lines_coef))
+list_pipe_in_array = np.array(formated_lines_coef)
+print("le tableau coef est \n {}".format(list_pipe_in_array))
+
+
 ############################################################################################
 print ("set trigger_level")
-count_data=15
+count_data=256
 des.setwire()
 print ("start_capture")
 des.start_capture()
+
+#print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
+
+adresse=0x81
+des.setpipein(list_pipe_in_array,adresse)
 ############################################################################################
+
 print ("injection")
 file = open('Signal_ADC.txt', "r")
 lines = file.readlines()
@@ -123,9 +145,9 @@ for elm in lines :
 	formated_lines.append(int(elm[:-1]))
 	#formated_lines.append(elm[:-1])
 
-print("la liste est \n {}".format(formated_lines))
+print("la liste ADC est \n {}".format(formated_lines))
 list_pipe_in_array = np.array(formated_lines)
-print("le tableau est \n {}".format(list_pipe_in_array))
+print("le tableau ADC est \n {}".format(list_pipe_in_array))
 
 #print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 

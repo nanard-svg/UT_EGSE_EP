@@ -17,6 +17,8 @@ use IEEE.std_logic_misc.all;
 use ieee.numeric_std.all;
 use work.FRONTPANEL.all;
 
+use work.UT_EGSE_EP_Package.all;
+
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
@@ -82,13 +84,16 @@ architecture arch of UT_EGSE is
     signal data_before_filter  : std_logic_vector(15 downto 0);
     signal ready_before_filter : std_logic;
 
-    signal data_after_filter  : std_logic_vector(15 downto 0);
+    signal data_after_filter  : signed(15 downto 0);
     signal ready_after_filter : std_logic;
     signal write_data         : STD_LOGIC;
     signal i_Start_Capture    : std_logic;
     signal i_level_trigger    : std_logic;
 
-    signal data_resize : std_logic_vector(31 downto 0);
+    signal data_resize           : std_logic_vector(31 downto 0);
+    signal pipe_in_rd_data_count : STD_LOGIC_VECTOR(9 DOWNTO 0);
+    signal coef_fir              : Array_config_32x16_type;
+    signal coef_fir_ready        : std_logic;
 
 begin
 
@@ -248,14 +253,16 @@ begin
     label_FIR_filter : entity work.FIR_filter
         port map(
             --global
-            i_clk_slow => sys_clk,
-            i_reset    => reset,
+            i_clk_slow       => sys_clk,
+            i_reset          => reset,
             --input
-            i_data     => data_before_filter,
-            i_ready    => ready_before_filter,
+            i_coef_fir       => coef_fir,
+            i_coef_fir_ready => coef_fir_ready,
+            i_data           => signed(data_before_filter),
+            i_ready          => ready_before_filter,
             --out
-            o_data     => data_after_filter,
-            o_ready    => ready_after_filter
+            o_data           => data_after_filter,
+            o_ready          => ready_after_filter
         );
 
     ------------------------------------------
@@ -317,55 +324,42 @@ begin
     data_resize <= std_logic_vector(resize(signed(data), 32));
 
     ------------------------------------------
-    --  FIFO pipe_in config
+    --  FSM pipe_in config in co coef FIR filter
     ------------------------------------------
 
-    fifo_pipe_in_config : entity work.fifo_pipe_out_w32_1024_r32_1024
+    label_FSM_pipe_in_config : entity work.FSM_read_config
         port map(
-            rst         => reset,
-            wr_clk      => okClk,
-            rd_clk      => sys_clk,
-            din         => pipe_in_config_din,
-            wr_en       => pipe_in_config_wr_en,
-            rd_en       => pipe_in_config_rd_en,
-            dout        => pipe_in_config_dout,
-            full        => open,
-            empty       => pipe_in_config_empty,
-            valid       => pipe_in_config_valid,
-            wr_rst_busy => open,
-            rd_rst_busy => open
+            i_clk_slow              => sys_clk,
+            i_reset                 => reset,
+            i_pipe_in_config_empty  => pipe_in_config_empty,
+            i_pipe_in_config_valid  => pipe_in_config_valid,
+            i_pipe_in_config_dout   => pipe_in_config_dout,
+            i_pipe_in_rd_data_count => pipe_in_rd_data_count,
+            o_pipe_in_config_rd_en  => pipe_in_config_rd_en,
+            o_coef_fir_ready        => coef_fir_ready,
+            o_coef_fir              => coef_fir
         );
 
     ------------------------------------------
-    --  read FIFO config to ILA
+    --  FIFO pipe_in config
     ------------------------------------------
 
-    label_process_fifo_config : process(sys_clk, reset) is
-    begin
-        if reset = '1' then
-
-            probe0(34 downto 3)  <= (others => '0');
-            probe0(0)            <= '0';
-            pipe_in_config_rd_en <= '0';
-
-        elsif rising_edge(sys_clk) then
-
-            if pipe_in_config_rd_en = '0' and pipe_in_config_empty = '0' and pipe_in_config_valid = '0' then
-                pipe_in_config_rd_en <= '1';
-                probe0(0)            <= '0';
-            else
-                if pipe_in_config_valid = '1' then
-                    probe0(34 downto 3)  <= pipe_in_config_dout;
-                    probe0(0)            <= '1';
-                    pipe_in_config_rd_en <= '0';
-                else
-                    probe0(0)            <= '0';
-                    pipe_in_config_rd_en <= '0';
-                end if;
-            end if;
-
-        end if;
-    end process;
+    fifo_pipe_in_config : entity work.fifo_pipe_in_w32_1024_r32_1024
+        port map(
+            rst           => reset,
+            wr_clk        => okClk,
+            rd_clk        => sys_clk,
+            din           => pipe_in_config_din,
+            wr_en         => pipe_in_config_wr_en,
+            rd_en         => pipe_in_config_rd_en,
+            dout          => pipe_in_config_dout,
+            full          => open,
+            empty         => pipe_in_config_empty,
+            valid         => pipe_in_config_valid,
+            rd_data_count => pipe_in_rd_data_count,
+            wr_rst_busy   => open,
+            rd_rst_busy   => open
+        );
 
     ------------------------------------------
     --  wire_in to wire_out next used for trig 
@@ -406,9 +400,9 @@ begin
     --    probe0(2)           <= pipe_in_empty;
     --    probe0(34 downto 3) <= pipe_in_dout;
 
-    probe0(0)           <= probe0(0);
+    probe0(0)           <= pipe_in_config_dout(0);
     probe0(1)           <= pipe_in_config_rd_en;
     probe0(2)           <= pipe_in_config_valid;
-    probe0(34 downto 3) <= probe0(34 downto 3);
+    probe0(34 downto 3) <= pipe_in_config_dout(31 downto 0);
 
 end arch;

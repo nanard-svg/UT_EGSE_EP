@@ -188,7 +188,7 @@ begin
         -------------------------------------------------------------------
 
     begin                               -------------begin of process-----
-        file_open(DONNEES, "coef.txt", read_mode);
+        file_open(DONNEES, "coef_HEX_V2.txt", read_mode);
         --ep_write  <= '0';
         --ep_dataout    <= (others => '0');
         i_signal                := 0;
@@ -965,7 +965,7 @@ begin
         SetWireInValue(x"00", x"0000_0002", NO_MASK);   -- start capture and unReset all design 
         UpdateWireIns;        
 
-        wait for 1 us;
+        wait for 20 us;
         pipeIn := pipeIn_signal;
         WriteToPipeIn(x"80", pipeInSize_count * 4); --  0x80 injection 
 

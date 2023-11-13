@@ -10,7 +10,7 @@ entity FSM_raw_data is
         --input
         i_level_trigger : in  std_logic;
         i_Start_Capture : in  std_logic;
-        i_data          : in  std_logic_vector(15 downto 0);
+        i_data          : in  signed(15 downto 0);
         i_ready         : in  std_logic;
         --output
         o_data          : out std_logic_vector(15 downto 0);
@@ -39,7 +39,7 @@ begin
         port map(
             clk        => i_clk_slow,
             srst       => i_reset,
-            din        => i_data,
+            din        => std_logic_vector(i_data),
             wr_en      => i_ready,
             rd_en      => rd_en,
             dout       => o_data,
