@@ -36,6 +36,7 @@ entity UT_EGSE is
 end UT_EGSE;
 
 architecture arch of UT_EGSE is
+
     signal sys_clk : STD_LOGIC;
 
     signal okClk : STD_LOGIC;
@@ -75,7 +76,7 @@ architecture arch of UT_EGSE is
 
     signal reset_wire : std_logic;
     signal locked     : std_logic;
-    signal data       : std_logic_vector(15 downto 0);
+    signal data       : std_logic_vector(31 downto 0);
 
     signal ready_fast : std_logic;
     signal data_fast  : std_logic_vector(15 downto 0);
@@ -94,6 +95,10 @@ architecture arch of UT_EGSE is
     signal pipe_in_rd_data_count : STD_LOGIC_VECTOR(9 DOWNTO 0);
     signal coef_fir              : Array_config_32x16_type;
     signal coef_fir_ready        : std_logic;
+
+    signal pipe_out_rd_data_count : std_logic_vector(10 downto 0);
+    signal i_data : std_logic_vector(31 downto 0);
+    
 
 begin
 
@@ -278,12 +283,15 @@ begin
             i_level_trigger => i_level_trigger,
             i_Start_Capture => i_Start_Capture,
             --input
-            i_data          => data_after_filter,
+            i_data          => i_data,
             i_ready         => ready_after_filter,
             --output
             o_data          => data,
             o_write_data    => write_data
         );
+
+i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);       
+        
     ------------------------------------------
     --  process trigger
     ------------------------------------------ 
@@ -307,21 +315,22 @@ begin
 
     fifo_pipe_out : entity work.fifo_pipe_out_w32_2048_r32_2048
         port map(
-            rst         => reset,
-            wr_clk      => sys_clk,
-            rd_clk      => okClk,
-            din         => data_resize,
-            wr_en       => write_data,
-            rd_en       => pipe_out_rd_en,
-            dout        => pipe_out_dout,
-            full        => open,
-            empty       => open,
-            valid       => open,
-            wr_rst_busy => open,
-            rd_rst_busy => open
+            rst           => reset,
+            wr_clk        => sys_clk,
+            rd_clk        => okClk,
+            din           => data_resize,
+            wr_en         => write_data,
+            rd_en         => pipe_out_rd_en,
+            dout          => pipe_out_dout,
+            full          => open,
+            empty         => open,
+            valid         => open,
+            rd_data_count => pipe_out_rd_data_count,
+            wr_rst_busy   => open,
+            rd_rst_busy   => open
         );
 
-    data_resize <= std_logic_vector(resize(signed(data), 32));
+    data_resize <= data;
 
     ------------------------------------------
     --  FSM pipe_in config in co coef FIR filter
@@ -370,7 +379,7 @@ begin
         if reset = '1' then
             ep20wire <= (others => '0');
         elsif rising_edge(sys_clk) then
-            ep20wire <= ep01wire;
+            ep20wire <= "000000000000000000000"&pipe_out_rd_data_count;
         end if;
     end process;
 
@@ -400,9 +409,9 @@ begin
     --    probe0(2)           <= pipe_in_empty;
     --    probe0(34 downto 3) <= pipe_in_dout;
 
-    probe0(0)           <= pipe_in_config_dout(0);
-    probe0(1)           <= pipe_in_config_rd_en;
-    probe0(2)           <= pipe_in_config_valid;
-    probe0(34 downto 3) <= pipe_in_config_dout(31 downto 0);
+    probe0(34)           <= pipe_in_empty;
+    probe0(33)           <= pipe_in_rd_en;
+    probe0(32)           <= pipe_in_valid;
+    probe0(31 downto 0) <= pipe_in_dout(31 downto 0);
 
 end arch;

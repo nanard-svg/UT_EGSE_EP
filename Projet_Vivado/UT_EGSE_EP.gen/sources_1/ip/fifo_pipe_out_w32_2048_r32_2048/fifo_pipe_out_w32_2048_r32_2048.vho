@@ -64,6 +64,7 @@ COMPONENT fifo_pipe_out_w32_2048_r32_2048
     full : OUT STD_LOGIC;
     empty : OUT STD_LOGIC;
     valid : OUT STD_LOGIC;
+    rd_data_count : OUT STD_LOGIC_VECTOR(10 DOWNTO 0);
     wr_rst_busy : OUT STD_LOGIC;
     rd_rst_busy : OUT STD_LOGIC
   );
@@ -86,6 +87,7 @@ your_instance_name : fifo_pipe_out_w32_2048_r32_2048
     full => full,
     empty => empty,
     valid => valid,
+    rd_data_count => rd_data_count,
     wr_rst_busy => wr_rst_busy,
     rd_rst_busy => rd_rst_busy
   );

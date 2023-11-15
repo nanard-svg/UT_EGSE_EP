@@ -11,6 +11,9 @@ count_data = 0
 ligne = 0
 i = 0
 lignes = []
+list_array_pipe_out_MSB = []
+list_array_pipe_out_LSB = []
+
 #list_pipe_in_array = np.ones(2048).astype(int)
 
 #list_pipe_in = np.linspace(0,511,512).astype(int)
@@ -77,13 +80,13 @@ class DESTester:
 
 	def setwire(self):
 
-		self.xem.SetWireInValue(0x01, count_data)
+		self.xem.SetWireInValue(0x01, level_trig)
 		self.xem.UpdateWireIns()
 
 	def getwire(self):
+		global get
 		self.xem.UpdateWireOuts();
-		get=self.xem.GetWireOutValue(0x20);
-		return(get)
+		get = self.xem.GetWireOutValue(0x20);
 
 	def setpipein(self,list_pipe_in,adresse):
 		self.xem.WriteToPipeIn(adresse, list_pipe_in)
@@ -119,14 +122,14 @@ for elm in lines_coef :
 	formated_lines_coef.append(int(elm[:-1]))##la liste lines a des eleementr ascii dont on supprime\n avec :-1
 	#formated_lines.append(elm[:-1])
 
-print("la liste coef est \n {}".format(formated_lines_coef))
+#print("la liste coef est \n {}".format(formated_lines_coef))
 list_pipe_in_array = np.array(formated_lines_coef)
-print("le tableau coef est \n {}".format(list_pipe_in_array))
+#print("le tableau coef est \n {}".format(list_pipe_in_array))
 
 
 ############################################################################################
 print ("set trigger_level")
-count_data=256
+level_trig=0x00000100
 des.setwire()
 print ("start_capture")
 des.start_capture()
@@ -145,9 +148,9 @@ for elm in lines :
 	formated_lines.append(int(elm[:-1]))
 	#formated_lines.append(elm[:-1])
 
-print("la liste ADC est \n {}".format(formated_lines))
+#print("la liste ADC est \n {}".format(formated_lines))
 list_pipe_in_array = np.array(formated_lines)
-print("le tableau ADC est \n {}".format(list_pipe_in_array))
+#print("le tableau ADC est \n {}".format(list_pipe_in_array))
 
 #print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 
@@ -155,24 +158,42 @@ adresse=0x80
 des.setpipein(list_pipe_in_array,adresse)
 ############################################################################################
 print ("read pipe out")
-#time.sleep(0.1)
+time.sleep(0.01)
+print("############################################")
+des.getwire()
+print("read pointer  {}".format(get))
+print("############################################")
 des.getpipeout()
 print(array_pipe_out.itemsize)
 print(array_pipe_out)
 list_array_pipe_out = list(array_pipe_out)
-print("inject_coef")
-#adresse=0x81
-#des.setpipein(list_pipe_in,adresse)
+
+for elm in list_array_pipe_out :
+	#list_array_pipe_out_MSB.append(int(elm/2**16))
+	list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+	# list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
+	list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+
+
+
+
+#print("list_array_pipe_out_MSB \n {}".format(list_array_pipe_out_MSB))
+print("list_array_pipe_out_LSB \n {}".format(list_array_pipe_out_LSB))
+
 ############################################################################################
 file = open("list_array_pipe_out.data", "w")
 for items in list_array_pipe_out:
 	file.write('%s\n' %items)
 file.close()
 #############################################################################################
-print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out))
-print("min",min(list_array_pipe_out))
-print("max",max(list_array_pipe_out))
-plt.plot(list_array_pipe_out)
+print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out_MSB))
+print("min list_array_pipe_out_MSB",min(list_array_pipe_out_MSB))
+print("max list_array_pipe_out_MSB",max(list_array_pipe_out_MSB))
+print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out_LSB))
+print("min list_array_pipe_out_LSB",min(list_array_pipe_out_LSB))
+print("max list_array_pipe_out_LSB",max(list_array_pipe_out_LSB))
+plt.plot(list_array_pipe_out_MSB)
+plt.plot(list_array_pipe_out_LSB)
 plt.show()
 
 print("script done")

@@ -10,10 +10,10 @@ entity FSM_raw_data is
         --input
         i_level_trigger : in  std_logic;
         i_Start_Capture : in  std_logic;
-        i_data          : in  signed(15 downto 0);
+        i_data          : in  std_logic_vector(31 downto 0);
         i_ready         : in  std_logic;
         --output
-        o_data          : out std_logic_vector(15 downto 0);
+        o_data          : out std_logic_vector(31 downto 0);
         o_write_data    : out std_logic
     );
 end entity FSM_raw_data;
@@ -39,13 +39,13 @@ begin
         port map(
             clk        => i_clk_slow,
             srst       => i_reset,
-            din        => std_logic_vector(i_data),
+            din        => i_data,
             wr_en      => i_ready,
             rd_en      => rd_en,
             dout       => o_data,
             full       => open,
-            empty      => open,
-            data_count => open
+            empty      => open
+            
         );
 
     ------------------------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ begin
                         o_write_data     <= '1';
                         Raw_Sample_Count <= Raw_Sample_Count + 1;
 
-                        if (To_integer(Raw_Sample_Count) = 512) then
+                        if (To_integer(Raw_Sample_Count) = 512-1) then
                             state <= IDLE;
                         end if;
 

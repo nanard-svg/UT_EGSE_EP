@@ -1,7 +1,7 @@
 // Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2020.2 (win64) Build 3064766 Wed Nov 18 09:12:45 MST 2020
-// Date        : Tue Nov  7 11:21:45 2023
+// Date        : Tue Nov 14 08:55:13 2023
 // Host        : DESKTOP-3HC2UMC running 64-bit major release  (build 9200)
 // Command     : write_verilog -force -mode synth_stub
 //               c:/3UT/UT_EGSE_EP/Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_stub.v
@@ -15,8 +15,8 @@
 // Please paste the declaration into a Verilog source file or add the file as an additional source.
 (* x_core_info = "fifo_generator_v13_2_5,Vivado 2020.2" *)
 module fifo_pipe_out_w32_2048_r32_2048(rst, wr_clk, rd_clk, din, wr_en, rd_en, dout, full, 
-  empty, valid, wr_rst_busy, rd_rst_busy)
-/* synthesis syn_black_box black_box_pad_pin="rst,wr_clk,rd_clk,din[31:0],wr_en,rd_en,dout[31:0],full,empty,valid,wr_rst_busy,rd_rst_busy" */;
+  empty, valid, rd_data_count, wr_rst_busy, rd_rst_busy)
+/* synthesis syn_black_box black_box_pad_pin="rst,wr_clk,rd_clk,din[31:0],wr_en,rd_en,dout[31:0],full,empty,valid,rd_data_count[10:0],wr_rst_busy,rd_rst_busy" */;
   input rst;
   input wr_clk;
   input rd_clk;
@@ -27,6 +27,7 @@ module fifo_pipe_out_w32_2048_r32_2048(rst, wr_clk, rd_clk, din, wr_en, rd_en, d
   output full;
   output empty;
   output valid;
+  output [10:0]rd_data_count;
   output wr_rst_busy;
   output rd_rst_busy;
 endmodule

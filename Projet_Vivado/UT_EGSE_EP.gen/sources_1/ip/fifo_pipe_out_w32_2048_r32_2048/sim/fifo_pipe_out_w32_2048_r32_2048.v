@@ -64,6 +64,7 @@ module fifo_pipe_out_w32_2048_r32_2048 (
   full,
   empty,
   valid,
+  rd_data_count,
   wr_rst_busy,
   rd_rst_busy
 );
@@ -88,6 +89,7 @@ output wire full;
 (* X_INTERFACE_INFO = "xilinx.com:interface:fifo_read:1.0 FIFO_READ EMPTY" *)
 output wire empty;
 output wire valid;
+output wire [10 : 0] rd_data_count;
 output wire wr_rst_busy;
 output wire rd_rst_busy;
 
@@ -110,7 +112,7 @@ output wire rd_rst_busy;
     .C_HAS_INT_CLK(0),
     .C_HAS_MEMINIT_FILE(0),
     .C_HAS_OVERFLOW(0),
-    .C_HAS_RD_DATA_COUNT(0),
+    .C_HAS_RD_DATA_COUNT(1),
     .C_HAS_RD_RST(0),
     .C_HAS_RST(1),
     .C_HAS_SRST(0),
@@ -327,7 +329,7 @@ output wire rd_rst_busy;
     .valid(valid),
     .underflow(),
     .data_count(),
-    .rd_data_count(),
+    .rd_data_count(rd_data_count),
     .wr_data_count(),
     .prog_full(),
     .prog_empty(),

@@ -19,11 +19,12 @@ end entity Injection;
 
 architecture RTL of Injection is
 
-    signal count          : unsigned(5 downto 0);
-    signal pipe_in_rd_en  : std_logic;
+    signal count            : unsigned(5 downto 0);
+    signal count_wait_valid : unsigned(5 downto 0);
+    signal pipe_in_rd_en    : std_logic;
     type state_type is (wait_sampling_time, wait_valid, generate_ready);
-    signal state          : state_type;
-    signal wait_one_cycle : std_logic;
+    signal state            : state_type;
+    signal wait_one_cycle   : std_logic;
 
 begin
 
@@ -34,7 +35,8 @@ begin
 
             pipe_in_rd_en <= '0';
 
-            count <= (others => '0');
+            count            <= (others => '0');
+            count_wait_valid <= (others => '0');
 
             o_data         <= (others => '0');
             o_ready        <= '0';
@@ -65,27 +67,37 @@ begin
 
                 when wait_valid =>
 
-                    if i_pipe_in_valid = '1' then
+                    count_wait_valid <= count_wait_valid + 1;
+
+                    if i_pipe_in_valid = '1' and i_pipe_in_empty = '0' then
                         o_data        <= i_pipe_in_dout;
                         o_ready       <= '1'; -- ready have to work every To_integer(count) = 43 when empty = '1'
                         pipe_in_rd_en <= '0';
                         count         <= (others => '0');
                         state         <= wait_sampling_time;
                     else
-                        pipe_in_rd_en <= '0';
-                        o_ready       <= '0';
+                        if count_wait_valid = 3 then
+                            pipe_in_rd_en    <= '0';
+                            o_ready          <= '0';
+                            state            <= wait_sampling_time;
+                            count_wait_valid <= (others => '0');
+                        else
+                            pipe_in_rd_en <= '0';
+                            o_ready       <= '0';
+                        end if;
                     end if;
 
                 when generate_ready =>
-                    
+
                     wait_one_cycle <= not wait_one_cycle;
-                    
+
                     if wait_one_cycle = '1' then
-                        o_ready       <= '1';
-                        pipe_in_rd_en <= '0';
-                        state         <= wait_sampling_time;
+                        o_ready        <= '1';
+                        pipe_in_rd_en  <= '0';
+                        state          <= wait_sampling_time;
+                        wait_one_cycle <= '0';
                     end if;
-                    
+
             end case;
         end if;
     end process;
