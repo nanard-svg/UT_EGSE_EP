@@ -10,9 +10,9 @@ entity Injection is
         o_pipe_in_rd_en : out std_logic;
         i_pipe_in_empty : in  std_logic;
         i_pipe_in_valid : in  std_logic;
-        i_pipe_in_dout  : in  std_logic_vector(15 downto 0);
+        i_pipe_in_dout  : in  signed(15 downto 0);
         --output injection
-        o_data          : out std_logic_vector(15 downto 0);
+        o_data          : out signed(15 downto 0);
         o_ready         : out std_logic
     );
 end entity Injection;

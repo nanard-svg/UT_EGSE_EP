@@ -12,7 +12,7 @@ entity FSM_read_config is
         --input
         i_pipe_in_config_empty  : in  std_logic;
         i_pipe_in_config_valid  : in  std_logic;
-        i_pipe_in_config_dout   : in  std_logic_vector(31 downto 0);
+        i_pipe_in_config_dout   : in  signed(31 downto 0);
         i_pipe_in_rd_data_count : in  STD_LOGIC_VECTOR(9 downto 0);
         --output
         o_pipe_in_config_rd_en  : out std_logic;
@@ -70,7 +70,7 @@ begin
                     o_pipe_in_config_rd_en <= '0';
 
                     if i_pipe_in_config_valid = '1' then
-                        o_coef_fir(add_coef) <= signed(i_pipe_in_config_dout(15 downto 0));
+                        o_coef_fir(add_coef) <= i_pipe_in_config_dout(15 downto 0);
                         add_coef             <= add_coef + 1;
                         state                <= read;
                     end if;

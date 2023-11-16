@@ -27,6 +27,8 @@ array_pipe_out = np.ones(512).astype(int)
 #ma_list = list(mon_tab)
 ###############################################
 
+#################################### CLASS ######################################
+
 class DESTester:
 	def __init__(self):
 		return
@@ -98,22 +100,24 @@ class DESTester:
 
 
 
-# Main code
+#################################### Main code ######################################
+
 print ("------ DES Encrypt/Decrypt Tester in Python ------")
 des = DESTester()
 if (False == des.InitializeDevice()):
 	exit
 print ("------------------------------------------------------------")
 time.sleep(1)
-############################################################################################
+################################## RESET #############################################
 print ("RESET")
 des.ResetDES()
 time.sleep(3)
+
+################################## UNRESET #############################################
 print ("unRESET")
 des.unResetDES()
 
-
-############################################################################################
+#################################  LOAD COEF  ###################################################
 print ("Coef")
 file = open('coef_V2.txt', "r")
 lines_coef = file.readlines()
@@ -125,20 +129,25 @@ for elm in lines_coef :
 #print("la liste coef est \n {}".format(formated_lines_coef))
 list_pipe_in_array = np.array(formated_lines_coef)
 #print("le tableau coef est \n {}".format(list_pipe_in_array))
+adresse=0x81
+des.setpipein(list_pipe_in_array,adresse)
 
-
-############################################################################################
+###################################  SET LEVEL TRIGG  ###############################################
 print ("set trigger_level")
-level_trig=0x00000100
+#level_trig=0xFFFF8EB8
+level_trig=-20000
+level_trig=int(np.uint32(level_trig))
+print(level_trig)
 des.setwire()
+
+
+###################################  START CAPTURE  ###############################################
 print ("start_capture")
 des.start_capture()
 
 #print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 
-adresse=0x81
-des.setpipein(list_pipe_in_array,adresse)
-############################################################################################
+#################################### INJECTION PULSE ##########################################
 
 print ("injection")
 file = open('Signal_ADC.txt', "r")
@@ -148,25 +157,33 @@ for elm in lines :
 	formated_lines.append(int(elm[:-1]))
 	#formated_lines.append(elm[:-1])
 
-#print("la liste ADC est \n {}".format(formated_lines))
 list_pipe_in_array = np.array(formated_lines)
-#print("le tableau ADC est \n {}".format(list_pipe_in_array))
-
-#print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 
 adresse=0x80
 des.setpipein(list_pipe_in_array,adresse)
-############################################################################################
-print ("read pipe out")
-time.sleep(0.01)
-print("############################################")
+
+################################### TEST fifo pipe out read pointer##############################################
+
 des.getwire()
+while (get != 512):
+	print("############################################")
+	print("read pointer  {}".format(get))
+	print("############################################")
+	des.getwire()
+
+print("############################################")
 print("read pointer  {}".format(get))
 print("############################################")
+
+################################ READ FIFO  Pipe out ##########################################################
+
 des.getpipeout()
 print(array_pipe_out.itemsize)
 print(array_pipe_out)
 list_array_pipe_out = list(array_pipe_out)
+
+
+################### SPLITE 32 bit Science from Pipe out ##########################################################
 
 for elm in list_array_pipe_out :
 	#list_array_pipe_out_MSB.append(int(elm/2**16))
@@ -180,12 +197,14 @@ for elm in list_array_pipe_out :
 #print("list_array_pipe_out_MSB \n {}".format(list_array_pipe_out_MSB))
 print("list_array_pipe_out_LSB \n {}".format(list_array_pipe_out_LSB))
 
-############################################################################################
+##################### WRITE FILE WITH SCIENCE from Pipe out ################################################
 file = open("list_array_pipe_out.data", "w")
 for items in list_array_pipe_out:
 	file.write('%s\n' %items)
 file.close()
-#############################################################################################
+
+
+####################### PLOT ################################
 print("Mean of res_twos_complement is ", np.mean(list_array_pipe_out_MSB))
 print("min list_array_pipe_out_MSB",min(list_array_pipe_out_MSB))
 print("max list_array_pipe_out_MSB",max(list_array_pipe_out_MSB))

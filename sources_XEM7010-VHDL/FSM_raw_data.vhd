@@ -10,10 +10,10 @@ entity FSM_raw_data is
         --input
         i_level_trigger : in  std_logic;
         i_Start_Capture : in  std_logic;
-        i_data          : in  std_logic_vector(31 downto 0);
+        i_data          : in  signed(31 downto 0);
         i_ready         : in  std_logic;
         --output
-        o_data          : out std_logic_vector(31 downto 0);
+        o_data          : out signed(31 downto 0);
         o_write_data    : out std_logic
     );
 end entity FSM_raw_data;
@@ -27,6 +27,7 @@ architecture RTL of FSM_raw_data is
     signal Raw_Sample_Count   : unsigned(31 downto 0);
     signal rd_en              : std_logic;
     signal Delay_Count        : unsigned(31 downto 0);
+    signal dout               : std_logic_vector(31 downto 0);
     --signal dout               : STD_LOGIC_VECTOR(15 downto 0);
 
 begin
@@ -37,16 +38,17 @@ begin
 
     label_Raw_Buffer : entity work.raw_data_fifo
         port map(
-            clk        => i_clk_slow,
-            srst       => i_reset,
-            din        => i_data,
-            wr_en      => i_ready,
-            rd_en      => rd_en,
-            dout       => o_data,
-            full       => open,
-            empty      => open
-            
+            clk   => i_clk_slow,
+            srst  => i_reset,
+            din   => std_logic_vector(i_data),
+            wr_en => i_ready,
+            rd_en => rd_en,
+            dout  => dout,
+            full  => open,
+            empty => open
         );
+
+    o_data <= signed(dout);
 
     ------------------------------------------------------------------------------------------------
     -- Initial raw buffer filling
@@ -80,7 +82,7 @@ begin
             Raw_Sample_Count <= (others => '0');
             Delay_Count      <= (others => '0');
             o_write_data     <= '0';
-            
+
         elsif rising_edge(i_clk_slow) then
             case state is
                 when IDLE =>
@@ -118,7 +120,7 @@ begin
                         o_write_data     <= '1';
                         Raw_Sample_Count <= Raw_Sample_Count + 1;
 
-                        if (To_integer(Raw_Sample_Count) = 512-1) then
+                        if (To_integer(Raw_Sample_Count) = 512 - 1) then
                             state <= IDLE;
                         end if;
 

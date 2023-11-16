@@ -56,7 +56,7 @@ architecture arch of UT_EGSE is
     signal pipe_in_wr_en : STD_LOGIC;
     signal pipe_in_rd_en : STD_LOGIC;
 
-    signal pipe_in_dout  : STD_LOGIC_VECTOR(31 downto 0);
+    signal pipe_in_dout  : signed(31 downto 0);
     signal pipe_in_empty : STD_LOGIC;
     signal pipe_in_valid : STD_LOGIC;
 
@@ -69,20 +69,18 @@ architecture arch of UT_EGSE is
     signal pipe_in_config_din   : STD_LOGIC_VECTOR(31 downto 0);
     signal pipe_in_config_wr_en : STD_LOGIC;
     signal pipe_in_config_rd_en : STD_LOGIC;
-    signal pipe_in_config_dout  : STD_LOGIC_VECTOR(31 downto 0);
+    signal pipe_in_config_dout  : signed(31 downto 0);
 
     signal pipe_in_config_empty : STD_LOGIC;
     signal pipe_in_config_valid : STD_LOGIC;
 
     signal reset_wire : std_logic;
     signal locked     : std_logic;
-    signal data       : std_logic_vector(31 downto 0);
+    signal data       : signed(31 downto 0);
 
-    signal ready_fast : std_logic;
-    signal data_fast  : std_logic_vector(15 downto 0);
-    signal clk_60Mhz  : STD_LOGIC;
+    signal clk_60Mhz : STD_LOGIC;
 
-    signal data_before_filter  : std_logic_vector(15 downto 0);
+    signal data_before_filter  : signed(15 downto 0);
     signal ready_before_filter : std_logic;
 
     signal data_after_filter  : signed(15 downto 0);
@@ -91,14 +89,15 @@ architecture arch of UT_EGSE is
     signal i_Start_Capture    : std_logic;
     signal i_level_trigger    : std_logic;
 
-    signal data_resize           : std_logic_vector(31 downto 0);
     signal pipe_in_rd_data_count : STD_LOGIC_VECTOR(9 DOWNTO 0);
     signal coef_fir              : Array_config_32x16_type;
     signal coef_fir_ready        : std_logic;
 
     signal pipe_out_rd_data_count : std_logic_vector(10 downto 0);
-    signal i_data : std_logic_vector(31 downto 0);
-    
+
+    signal ready_fast_injection : std_logic;
+    signal data_fast_injection  : signed(15 downto 0);
+    signal i_data_after_filter  : signed(31 downto 0);
 
 begin
 
@@ -227,10 +226,10 @@ begin
             o_pipe_in_rd_en => pipe_in_rd_en,
             i_pipe_in_empty => pipe_in_empty,
             i_pipe_in_valid => pipe_in_valid,
-            i_pipe_in_dout  => pipe_in_dout(15 downto 0),
+            i_pipe_in_dout  => signed(pipe_in_dout(15 downto 0)),
             --output injection
-            o_data          => data_fast,
-            o_ready         => ready_fast
+            o_data          => data_fast_injection,
+            o_ready         => ready_fast_injection
         );
 
     ------------------------------------------
@@ -244,10 +243,10 @@ begin
             i_clk_fast => clk_60Mhz,
             i_clk_slow => sys_clk,
             --ready
-            i_ready    => ready_fast,
+            i_ready    => ready_fast_injection,
             o_ready    => ready_before_filter, --ready_slow,
             --data science
-            i_data     => data_fast,
+            i_data     => data_fast_injection,
             o_data     => data_before_filter --data_slow
         );
 
@@ -263,7 +262,7 @@ begin
             --input
             i_coef_fir       => coef_fir,
             i_coef_fir_ready => coef_fir_ready,
-            i_data           => signed(data_before_filter),
+            i_data           => data_before_filter,
             i_ready          => ready_before_filter,
             --out
             o_data           => data_after_filter,
@@ -283,15 +282,15 @@ begin
             i_level_trigger => i_level_trigger,
             i_Start_Capture => i_Start_Capture,
             --input
-            i_data          => i_data,
+            i_data          => i_data_after_filter,
             i_ready         => ready_after_filter,
             --output
             o_data          => data,
             o_write_data    => write_data
         );
 
-i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);       
-        
+    i_data_after_filter <= (data_after_filter) & (data_before_filter);
+
     ------------------------------------------
     --  process trigger
     ------------------------------------------ 
@@ -301,7 +300,7 @@ i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);
         if reset = '1' then
             i_level_trigger <= '0';
         elsif rising_edge(sys_clk) then
-            if signed(ep01wire(15 downto 0)) < signed(data_before_filter) then
+            if signed(ep01wire(15 downto 0)) < data_before_filter then
                 i_level_trigger <= '1';
             else
                 i_level_trigger <= '0';
@@ -318,7 +317,7 @@ i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);
             rst           => reset,
             wr_clk        => sys_clk,
             rd_clk        => okClk,
-            din           => data_resize,
+            din           => std_logic_vector(data),
             wr_en         => write_data,
             rd_en         => pipe_out_rd_en,
             dout          => pipe_out_dout,
@@ -330,8 +329,6 @@ i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);
             rd_rst_busy   => open
         );
 
-    data_resize <= data;
-
     ------------------------------------------
     --  FSM pipe_in config in co coef FIR filter
     ------------------------------------------
@@ -342,7 +339,7 @@ i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);
             i_reset                 => reset,
             i_pipe_in_config_empty  => pipe_in_config_empty,
             i_pipe_in_config_valid  => pipe_in_config_valid,
-            i_pipe_in_config_dout   => pipe_in_config_dout,
+            i_pipe_in_config_dout   => signed(pipe_in_config_dout),
             i_pipe_in_rd_data_count => pipe_in_rd_data_count,
             o_pipe_in_config_rd_en  => pipe_in_config_rd_en,
             o_coef_fir_ready        => coef_fir_ready,
@@ -379,7 +376,7 @@ i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);
         if reset = '1' then
             ep20wire <= (others => '0');
         elsif rising_edge(sys_clk) then
-            ep20wire <= "000000000000000000000"&pipe_out_rd_data_count;
+            ep20wire <= "000000000000000000000" & pipe_out_rd_data_count;
         end if;
     end process;
 
@@ -409,9 +406,9 @@ i_data  <=  (std_logic_vector(data_after_filter)) & (data_before_filter);
     --    probe0(2)           <= pipe_in_empty;
     --    probe0(34 downto 3) <= pipe_in_dout;
 
-    probe0(34)           <= pipe_in_empty;
-    probe0(33)           <= pipe_in_rd_en;
-    probe0(32)           <= pipe_in_valid;
-    probe0(31 downto 0) <= pipe_in_dout(31 downto 0);
+    probe0(34)          <= pipe_in_empty;
+    probe0(33)          <= pipe_in_rd_en;
+    probe0(32)          <= pipe_in_valid;
+    probe0(31 downto 0) <= std_logic_vector(pipe_in_dout(31 downto 0));
 
 end arch;
