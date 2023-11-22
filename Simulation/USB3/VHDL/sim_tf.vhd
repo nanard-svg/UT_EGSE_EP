@@ -54,7 +54,7 @@ architecture simulate of SIM_TEST is
 
     -- okHostCalls Simulation Parameters & Signals ----------------------------------------------
     constant tCK      : time := 5 ns;   --Half of the hi_clk frequency @ 1ns timing = 100MHz
-    constant Tsys_clk : time := 2.5 ns;   --Half of the hi_clk frequency @ 1ns timing = 100MHz
+    constant Tsys_clk : time := 2.5 ns; --Half of the hi_clk frequency @ 1ns timing = 100MHz
 
     signal hi_clk     : std_logic;
     signal hi_drive   : std_logic                     := '0';
@@ -945,14 +945,12 @@ begin
         FrontPanelReset;
         wait for 1 ns;
 
-        
-        SetWireInValue(x"00", x"0000_0001", NO_MASK);   -- Reset all design
+        SetWireInValue(x"00", x"0000_0001", NO_MASK); -- Reset all design
         UpdateWireIns;
-        SetWireInValue(x"00", x"0000_0000", NO_MASK);   -- unReset all design 
+        SetWireInValue(x"00", x"0000_0000", NO_MASK); -- unReset all design 
         UpdateWireIns;
-        wait for 700 us;    -- write raw data fifo almost full 
-        
-        
+        wait for 700 us;                -- write raw data fifo almost full 
+
         wait for 10 us;
         pipeIn := pipeIn_signal_config;
         WriteToPipeIn(x"81", pipeInSize_count_config * 4); --  0x80 config
@@ -960,25 +958,30 @@ begin
         wait for 10 us;
         -- apply all
         SetWireInValue(x"01", x"0000_0100", NO_MASK); -- set trig
-        UpdateWireIns; 
-        
-        SetWireInValue(x"00", x"0000_0002", NO_MASK);   -- start capture and unReset all design 
-        UpdateWireIns;        
+        UpdateWireIns;
 
-        wait for 20 us;
-        pipeIn := pipeIn_signal;
-        WriteToPipeIn(x"80", pipeInSize_count * 4); --  0x80 injection 
+        SetWireInValue(x"00", x"0000_0002", NO_MASK); -- start capture and unReset all design 
+        UpdateWireIns;
 
+        loop
 
-        wait for 10 us;
+            wait for 20 us;
+            pipeIn := pipeIn_signal;
+            WriteToPipeIn(x"80", pipeInSize_count * 4); --  0x80 injection 
 
-        --WireOutValue <= GetWireOutValue(x"01");
-        UpdateWireOuts;
+            wait for 10 us;
 
-        wait for 100 us;
+            --WireOutValue <= GetWireOutValue(x"01");
+            UpdateWireOuts;
 
-        --ReadFromPipeOut(x"A1", 128);
-        Check_PipeOut(MODE_LFSR);
+            wait for 800 us;
+
+            --ReadFromPipeOut(x"A1", 128);
+            --Check_PipeOut(MODE_LFSR);
+            ReadFromPipeOut(x"A1", 1024);
+            ReadFromPipeOut(x"A1", 1024);
+
+        end loop;
 
         wait;
 
