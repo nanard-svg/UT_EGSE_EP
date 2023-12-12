@@ -17,7 +17,7 @@ list_array_pipe_out_LSB = []
 
 
 
-file_names = ['Signal_ADC_20keV.txt','Signal_ADC_100keV.txt','Signal_ADC_200keV.txt','Signal_ADC_400keV.txt','Signal_ADC_600keV.txt', 'Signal_ADC_800keV.txt', 'Signal_ADC_1000keV.txt']
+file_names = ['Signal_ADC_20keV.txt', 'Signal_ADC_100keV.txt','Signal_ADC_100keV.txt','Signal_ADC_200keV.txt','Signal_ADC_200keV.txt','Signal_ADC_400keV.txt','Signal_ADC_400keV.txt', 'Signal_ADC_600keV.txt','Signal_ADC_800keV.txt','Signal_ADC_800keV.txt','Signal_ADC_800keV.txt', 'Signal_ADC_1000keV.txt', 'Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt']
 
 #list_pipe_in_array = np.ones(2048).astype(int)
 
@@ -90,16 +90,16 @@ class DESTester:
         self.xem.SetWireInValue(0x01, level_trig)
         self.xem.UpdateWireIns()
 
-    def getwire(self):
+    def getwire(self,adress_wire_out_science):
         global get
         self.xem.UpdateWireOuts();
-        get = self.xem.GetWireOutValue(0x20);
+        get = self.xem.GetWireOutValue(adress_wire_out_science)
 
     def setpipein(self,list_pipe_in,adresse):
         self.xem.WriteToPipeIn(adresse, list_pipe_in)
 
-    def getpipeout(self):
-        self.xem.ReadFromPipeOut(0xA1,array_pipe_out)
+    def getpipeout(self,adresse_pipe_out_read):
+        self.xem.ReadFromPipeOut(adresse_pipe_out_read,array_pipe_out)
         return(array_pipe_out)
 
 
@@ -174,19 +174,21 @@ for file_name in file_names:
     des.setpipein(list_pipe_in_array, adresse)
 
 ################################### TEST fifo pipe out read pointer##############################################
-    des.getwire()
+    adress_wire_out_science = 0x20
+    des.getwire(adress_wire_out_science)
     while (get != 512):
-        #print("############################################")
-        #print("read pointer  {}".format(get))
-        #print("############################################")
-        des.getwire()
+        print("############################################")
+        print("read pointer  {}".format(get))
+        print("############################################")
+        des.getwire(adress_wire_out_science)
 
     #print("############################################")
     #print("read pointer  {}".format(get))
     #print("############################################")
 
-################################ READ FIFO  Pipe out ##########################################################
-    des.getpipeout()
+################################ READ FIFO  Pipe out raw data science #############################################
+    adresse_pipe_out_read=0xA1
+    des.getpipeout(adresse_pipe_out_read)
     #print(array_pipe_out.itemsize)
     #print("print array_pipe_out  {}".format(array_pipe_out))
     list_array_pipe_out = list(array_pipe_out)
@@ -214,8 +216,47 @@ for file_name in file_names:
     file.close()
     indice+=1
 
-    plt.plot(list_array_pipe_out_LSB)
-    plt.plot(list_array_pipe_out_MSB)
-    plt.show()
+    #plt.plot(list_array_pipe_out_LSB)
+    #plt.plot(list_array_pipe_out_MSB)
+    #plt.show()
+
+
+
+
+adress_wire_out_science = 0x21
+des.getwire(adress_wire_out_science)
+while (get != 1024):
+    #print("############################################")
+    #print("read pointer spectrum  {}".format(get))
+    #print("############################################")
+    des.getwire(adress_wire_out_science)
+
+
+for i in range(2):
+    print("################################ READ FIFO  Pipe spectrum #############################################")
+
+    adresse_pipe_out_read=0xA2
+    des.getpipeout(adresse_pipe_out_read)
+    #print(array_pipe_out.itemsize)
+    #print("print array_pipe_out  {}".format(array_pipe_out))
+    list_array_pipe_out = list(array_pipe_out)
+
+    ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
+
+    for elm in list_array_pipe_out :
+        #list_array_pipe_out_MSB.append(int(elm/2**16))
+        list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+         # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
+        list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+        #print("type",type(elm))
+        print("spectrum",hex(elm))
+
+
+
+
+#print("############################################")
+#print("list_array_pipe_out_MSB ", list_array_pipe_out_MSB)
+#print("list_array_pipe_out_MSB", list_array_pipe_out_LSB)
+
 
 print("script done")

@@ -30,6 +30,10 @@ entity UT_EGSE is
         okAA     : inout STD_LOGIC;     --removed for simulation
         sys_clkp : in    STD_LOGIC;
         sys_clkn : in    STD_LOGIC;
+        sck      : out   STD_LOGIC;
+        cnv      : out   STD_LOGIC;
+        sdi      : in    STD_LOGIC;
+        sdo      : out   STD_LOGIC;
         led      : out   STD_LOGIC_VECTOR(7 downto 0)
         --clk_60Mhz : out   STD_LOGIC
     );
@@ -42,10 +46,11 @@ architecture arch of UT_EGSE is
     signal okClk : STD_LOGIC;
     signal okHE  : STD_LOGIC_VECTOR(112 downto 0);
     signal okEH  : STD_LOGIC_VECTOR(64 downto 0);
-    signal okEHx : STD_LOGIC_VECTOR(65 * 4 - 1 downto 0);
+    signal okEHx : STD_LOGIC_VECTOR(65 * 6 - 1 downto 0);
 
     signal ep00wire : STD_LOGIC_VECTOR(31 downto 0);
     signal ep20wire : STD_LOGIC_VECTOR(31 downto 0);
+    signal ep21wire : STD_LOGIC_VECTOR(31 downto 0);
 
     signal reset : std_logic;
     signal count : unsigned(31 downto 0);
@@ -56,7 +61,7 @@ architecture arch of UT_EGSE is
     signal pipe_in_wr_en : STD_LOGIC;
     signal pipe_in_rd_en : STD_LOGIC;
 
-    signal pipe_in_dout  : signed(31 downto 0);
+    signal pipe_in_dout  : STD_LOGIC_VECTOR(31 downto 0);
     signal pipe_in_empty : STD_LOGIC;
     signal pipe_in_valid : STD_LOGIC;
 
@@ -69,7 +74,7 @@ architecture arch of UT_EGSE is
     signal pipe_in_config_din   : STD_LOGIC_VECTOR(31 downto 0);
     signal pipe_in_config_wr_en : STD_LOGIC;
     signal pipe_in_config_rd_en : STD_LOGIC;
-    signal pipe_in_config_dout  : signed(31 downto 0);
+    signal pipe_in_config_dout  : STD_LOGIC_VECTOR(31 downto 0);
 
     signal pipe_in_config_empty : STD_LOGIC;
     signal pipe_in_config_valid : STD_LOGIC;
@@ -98,6 +103,20 @@ architecture arch of UT_EGSE is
     signal ready_fast_injection : std_logic;
     signal data_fast_injection  : signed(15 downto 0);
     signal i_data_after_filter  : signed(31 downto 0);
+    signal data_rx              : std_logic_vector(17 downto 0);
+    signal ready_rx             : std_logic;
+    signal i_data_CDC           : signed(15 downto 0);
+    signal i_ready_CDC          : std_logic;
+    signal data_rx_keeped       : std_logic_vector(17 downto 0);
+    signal ready_rx_keeped      : std_logic;
+    signal TH_rise              : std_logic_vector(31 downto 0);
+    signal TH_fall              : std_logic_vector(31 downto 0);
+
+    signal pipe_out_spectrum_rd_en : std_logic;
+    signal pipe_out_spectrum_dout  : std_logic_vector(31 downto 0);
+    signal pipe_out_spectrum_din   : STD_LOGIC_VECTOR(31 downto 0);
+    signal pipe_out_spectrum_wr_en : STD_LOGIC;
+    signal pipe_out_rd_data_count_spectrum: std_logic_vector(10 downto 0);
 
 begin
 
@@ -109,7 +128,7 @@ begin
     led(2) <= '0' when (led_buf(2) = '1') else 'Z';
     led(1) <= '0' when (led_buf(1) = '1') else 'Z';
     led(0) <= '0' when (led_buf(0) = '1') else 'Z';
-
+    sdo    <= '1';
     ------------------------------------------
     --  LED
     ------------------------------------------
@@ -214,7 +233,7 @@ begin
         );
 
     ------------------------------------------
-    --  Injection
+    --  Injection to CDC
     ------------------------------------------  
 
     label_Injection : entity work.Injection
@@ -233,40 +252,74 @@ begin
         );
 
     ------------------------------------------
-    --  CDC after Injection
-    ------------------------------------------
+    --  ADC to keeper
+    ------------------------------------------  
 
-    label_cdc : entity work.Fast_to_Slow_CDC_lite
+    label_ADC : entity work.Rx_fe
         port map(
             --global
-            i_reset    => reset,
-            i_clk_fast => clk_60Mhz,
-            i_clk_slow => sys_clk,
-            --ready
-            i_ready    => ready_fast_injection,
-            o_ready    => ready_before_filter, --ready_slow,
-            --data science
-            i_data     => data_fast_injection,
-            o_data     => data_before_filter --data_slow
+            clk        => clk_60Mhz,
+            rst        => reset,
+            --IO ADC
+            o_sck      => sck,
+            o_cnv      => cnv,
+            i_sdo      => sdi,
+            --out
+            o_data_rx  => data_rx,
+            o_ready_rx => ready_rx
         );
 
     ------------------------------------------
-    --  FIR filter
-    ------------------------------------------
+    --  keep data from ADC to CDC
+    ------------------------------------------ 
 
-    label_FIR_filter : entity work.FIR_filter
+    label_keep_data_from_ADC : process(clk_60Mhz, reset) is
+    begin
+        if reset = '1' then
+            data_rx_keeped  <= (others => '0');
+            ready_rx_keeped <= '0';
+        elsif rising_edge(clk_60Mhz) then
+            if ready_rx = '1' then
+                ready_rx_keeped <= '1';
+                data_rx_keeped  <= data_rx;
+            else
+                ready_rx_keeped <= '0';
+            end if;
+        end if;
+    end process;
+
+    ------------------------------------------
+    --  MUX ADC OR Injection
+    ------------------------------------------  
+
+    label_mux_science_data : i_data_CDC   <= signed(data_rx_keeped(17 downto 2)) when ep00wire(31) = '1' else data_fast_injection;
+    label_mux_science_ready : i_ready_CDC <= ready_rx_keeped when ep00wire(31) = '1' else ready_fast_injection;
+
+    ------------------------------------------
+    --  EP
+    ------------------------------------------
+    label_Ep : entity work.EP
         port map(
-            --global
-            i_clk_slow       => sys_clk,
-            i_reset          => reset,
-            --input
-            i_coef_fir       => coef_fir,
-            i_coef_fir_ready => coef_fir_ready,
-            i_data           => data_before_filter,
-            i_ready          => ready_before_filter,
-            --out
-            o_data           => data_after_filter,
-            o_ready          => ready_after_filter
+            i_clk_slow                => sys_clk,
+            i_clk_fast                => clk_60Mhz,
+            i_reset                   => reset,
+            -- input param trigger pick detect energy
+            i_TH_rise                 => TH_rise,
+            i_TH_fall                 => TH_fall,
+            -- input Data science
+            i_ready_CDC               => i_ready_CDC,
+            i_data_CDC                => i_data_CDC,
+            -- out view 
+            o_data_after_filter       => data_after_filter,
+            o_ready_after_filter      => ready_after_filter,
+            -- input coef filter
+            i_coef_fir                => coef_fir,
+            i_coef_fir_ready          => coef_fir_ready,
+            -- out view
+            o_data_before_filter      => data_before_filter,
+            -- out spectrum to fifo pipe out
+            o_pipe_out_spectrum_din   => pipe_out_spectrum_din,
+            o_pipe_out_spectrum_wr_en => pipe_out_spectrum_wr_en
         );
 
     ------------------------------------------
@@ -292,7 +345,7 @@ begin
     i_data_after_filter <= (data_after_filter) & (data_before_filter);
 
     ------------------------------------------
-    --  process trigger
+    --  process trigger raw data
     ------------------------------------------ 
 
     label_trigger : process(sys_clk, reset) is
@@ -312,7 +365,7 @@ begin
     --  FIFO pipe_out data science
     ------------------------------------------
 
-    fifo_pipe_out : entity work.fifo_pipe_out_w32_2048_r32_2048
+    fifo_pipe_out_science : entity work.fifo_pipe_out_w32_2048_r32_2048
         port map(
             rst           => reset,
             wr_clk        => sys_clk,
@@ -325,6 +378,27 @@ begin
             empty         => open,
             valid         => open,
             rd_data_count => pipe_out_rd_data_count,
+            wr_rst_busy   => open,
+            rd_rst_busy   => open
+        );
+
+    ------------------------------------------
+    --  FIFO pipe_out spectrum
+    ------------------------------------------
+
+    fifo_pipe_out_specrum : entity work.fifo_pipe_out_w32_2048_r32_2048
+        port map(
+            rst           => reset,
+            wr_clk        => sys_clk,
+            rd_clk        => okClk,
+            din           => pipe_out_spectrum_din,
+            wr_en         => pipe_out_spectrum_wr_en,
+            rd_en         => pipe_out_spectrum_rd_en,
+            dout          => pipe_out_spectrum_dout,
+            full          => open,
+            empty         => open,
+            valid         => open,
+            rd_data_count => pipe_out_rd_data_count_spectrum,
             wr_rst_busy   => open,
             rd_rst_busy   => open
         );
@@ -368,7 +442,7 @@ begin
         );
 
     ------------------------------------------
-    --  wire_in to wire_out next used for trig 
+    --  wire out for FIFO pipe out science. 
     ------------------------------------------
 
     label_process_inter_wire : process(sys_clk, reset) is
@@ -379,22 +453,44 @@ begin
             ep20wire <= "000000000000000000000" & pipe_out_rd_data_count;
         end if;
     end process;
+    
+    
+    ------------------------------------------
+    --  wire out for FIFO pipe out spectrum. 
+    ------------------------------------------
+
+    label_process_spectrum : process(sys_clk, reset) is
+    begin
+        if reset = '1' then
+            ep21wire <= (others => '0');
+        elsif rising_edge(sys_clk) then
+            ep21wire <= "000000000000000000000" & pipe_out_rd_data_count_spectrum;
+        end if;
+    end process;
 
     --  okwire OR
-    okWO : okWireOR generic map(N => 4) port map(okEH => okEH, okEHx => okEHx);
+    okWO : okWireOR generic map(N => 6) port map(okEH => okEH, okEHx => okEHx);
     --  reset, start_capture
     ep00 : okWireIn port map(okHE => okHE, ep_addr => x"00", ep_dataout => ep00wire);
     --  level trig
     ep01 : okWireIn port map(okHE => okHE, ep_addr => x"01", ep_dataout => ep01wire);
+    --  level TH_rise
+    ep02 : okWireIn port map(okHE => okHE, ep_addr => x"02", ep_dataout => TH_rise);
+    --  level TH_fall
+    ep03 : okWireIn port map(okHE => okHE, ep_addr => x"03", ep_dataout => TH_fall);
+
     --  read wire in
     ep20 : okWireOut port map(okHE => okHE, okEH => okEHx(1 * 65 - 1 downto 0 * 65), ep_addr => x"20", ep_datain => ep20wire);
+        --  read wire in
+    ep21 : okWireOut port map(okHE => okHE, okEH => okEHx(2 * 65 - 1 downto 1 * 65), ep_addr => x"21", ep_datain => ep21wire);
     --  pipe in injection
-    ep80 : okPipeIn port map(okHE => okHE, okEH => okEHx(2 * 65 - 1 downto 1 * 65), ep_addr => x"80", ep_write => pipe_in_wr_en, ep_dataout => pipe_in_din);
+    ep80 : okPipeIn port map(okHE => okHE, okEH => okEHx(3 * 65 - 1 downto 2 * 65), ep_addr => x"80", ep_write => pipe_in_wr_en, ep_dataout => pipe_in_din);
     --  pipe in config
-    ep81 : okPipeIn port map(okHE => okHE, okEH => okEHx(3 * 65 - 1 downto 2 * 65), ep_addr => x"81", ep_write => pipe_in_config_wr_en, ep_dataout => pipe_in_config_din);
+    ep81 : okPipeIn port map(okHE => okHE, okEH => okEHx(4 * 65 - 1 downto 3 * 65), ep_addr => x"81", ep_write => pipe_in_config_wr_en, ep_dataout => pipe_in_config_din);
     --  pipe out raw data
-    epA1 : okPipeOut port map(okHE => okHE, okEH => okEHx(4 * 65 - 1 downto 3 * 65), ep_addr => x"A1", ep_read => pipe_out_rd_en, ep_datain => pipe_out_dout);
-    --epA1 : okBTPipeOut port map(okHE => okHE, okEH => okEHx(4 * 65 - 1 downto 3 * 65), ep_addr => x"A1", ep_read => okB_ep_read, ep_blockstrobe => open, ep_datain => okB_po0_ep_datain, ep_ready => okB_pipe_out_ready);
+    epA1 : okPipeOut port map(okHE => okHE, okEH => okEHx(5 * 65 - 1 downto 4 * 65), ep_addr => x"A1", ep_read => pipe_out_rd_en, ep_datain => pipe_out_dout);
+    --  pipe out spectrum
+    epA2 : okPipeOut port map(okHE => okHE, okEH => okEHx(6 * 65 - 1 downto 5 * 65), ep_addr => x"A2", ep_read => pipe_out_spectrum_rd_en, ep_datain => pipe_out_spectrum_dout);
 
     label_ila : entity work.ila_0
         port map(

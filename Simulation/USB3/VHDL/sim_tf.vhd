@@ -34,9 +34,13 @@ architecture simulate of SIM_TEST is
             okUH     : in    STD_LOGIC_VECTOR(4 downto 0);
             okHU     : out   STD_LOGIC_VECTOR(2 downto 0);
             okUHU    : inout STD_LOGIC_VECTOR(31 downto 0);
-            --okAA     : inout STD_LOGIC;
+            --okAA     : inout STD_LOGIC;     --removed for simulation
             sys_clkp : in    STD_LOGIC;
             sys_clkn : in    STD_LOGIC;
+            sck      : out   STD_LOGIC;
+            cnv      : out   STD_LOGIC;
+            sdi      : in    STD_LOGIC;
+            sdo      : out   STD_LOGIC;
             led      : out   STD_LOGIC_VECTOR(7 downto 0)
         );
     end component;
@@ -69,7 +73,7 @@ architecture simulate of SIM_TEST is
     -- Clocks
     signal sys_clk : std_logic := '0';
 
-    type PIPEIN_ARRAY is array (0 to 4095) of std_logic_vector(7 downto 0);
+    type PIPEIN_ARRAY is array (0 to 16380) of std_logic_vector(7 downto 0);
     signal pipeIn_signal    : PIPEIN_ARRAY;
     signal pipeInSize_count : integer;
     signal Reset            : std_logic;
@@ -77,6 +81,9 @@ architecture simulate of SIM_TEST is
     signal WireOutValue            : std_logic_vector(31 downto 0);
     signal pipeIn_signal_config    : PIPEIN_ARRAY;
     signal pipeInSize_count_config : integer;
+    signal sck                     : STD_LOGIC;
+    signal cnv                     : STD_LOGIC;
+    signal sdo                     : STD_LOGIC;
 
     ---------------------------------------------------------------------------------------------
 
@@ -85,7 +92,9 @@ architecture simulate of SIM_TEST is
     --------------------------------------------------------------------------
 begin
 
-    dut : UT_EGSE
+    Reset <= '1', '0' after 100 ns;
+
+    inst_DUT : UT_EGSE
         port map(
             okUH     => okUH,           --: in    STD_LOGIC_VECTOR (4  downto 0);           -- input  wire [4:0]   okUH,
             okHU     => okHU,           --: out   STD_LOGIC_VECTOR (2  downto 0);           -- output wire [2:0]   okHU,
@@ -94,7 +103,25 @@ begin
 
             sys_clkp => sys_clkp,
             sys_clkn => sys_clkn,
+            sck      => sck,
+            cnv      => cnv,
+            sdi      => sdo,
+            sdo      => open,
             led      => open
+        );
+
+    ---------------------------------------------------------------------------------------------------------------------------------
+    --
+    -- AD7982_Emulators emul
+    --
+    ------------------------------------------------------------------------------------------------------
+
+    inst_AD7982_Emulators : entity work.AD7982_Emulators
+        port map(
+            i_Rst_n => Reset,
+            i_sck   => sck,
+            i_cnv   => cnv,
+            o_sdo   => sdo
         );
 
     -- okHostCalls Simulation okHostCall<->okHost Mapping  --------------------------------------
@@ -133,8 +160,6 @@ begin
     -- Reset
     --
     ----------------------------------------------------------------------------------------------
-
-    Reset <= '1', '0' after 100 ns;
 
     label_read_file_injection : process
         ------------------------------------------------------------------
@@ -949,7 +974,10 @@ begin
         UpdateWireIns;
         SetWireInValue(x"00", x"0000_0000", NO_MASK); -- unReset all design 
         UpdateWireIns;
-        wait for 700 us;                -- write raw data fifo almost full 
+        SetWireInValue(x"00", x"0000_0000", NO_MASK); -- set input ADC or Injection  
+        UpdateWireIns;
+
+        --wait for 700 us;                -- write raw data fifo almost full 
 
         wait for 10 us;
         pipeIn := pipeIn_signal_config;
@@ -957,31 +985,36 @@ begin
 
         wait for 10 us;
         -- apply all
-        SetWireInValue(x"01", x"0000_0100", NO_MASK); -- set trig
+        SetWireInValue(x"01", x"0000_8000", NO_MASK); -- set trig
         UpdateWireIns;
+        
+        wait for 10 us;
+        -- apply all
+        SetWireInValue(x"02", x"0000_0100", NO_MASK); -- set TH_rise
+        UpdateWireIns;
+
+        wait for 10 us;
+        -- apply all
+        SetWireInValue(x"03", x"0000_0100", NO_MASK); -- set TH_fall
+        UpdateWireIns;
+
 
         SetWireInValue(x"00", x"0000_0002", NO_MASK); -- start capture and unReset all design 
         UpdateWireIns;
 
-        loop
+        wait for 500 us;
+        pipeIn := pipeIn_signal;
+        WriteToPipeIn(x"80", pipeInSize_count * 4); --  0x80 injection 
 
-            wait for 20 us;
-            pipeIn := pipeIn_signal;
-            WriteToPipeIn(x"80", pipeInSize_count * 4); --  0x80 injection 
+        wait for 10 us;
 
-            wait for 10 us;
+        --WireOutValue <= GetWireOutValue(x"01");
+        UpdateWireOuts;
 
-            --WireOutValue <= GetWireOutValue(x"01");
-            UpdateWireOuts;
+        wait for 100 us;
 
-            wait for 800 us;
-
-            --ReadFromPipeOut(x"A1", 128);
-            --Check_PipeOut(MODE_LFSR);
-            ReadFromPipeOut(x"A1", 1024);
-            ReadFromPipeOut(x"A1", 1024);
-
-        end loop;
+        --ReadFromPipeOut(x"A1", 128);
+        Check_PipeOut(MODE_LFSR);
 
         wait;
 
