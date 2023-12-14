@@ -17,14 +17,16 @@ end entity spectrum;
 
 architecture RTL of spectrum is
 
-    signal addr                 : std_logic_vector(9 downto 0);
-    signal we                   : std_logic;
-    signal di                   : std_logic_vector(15 downto 0);
-    signal en                   : std_logic;
-    signal do                   : std_logic_vector(15 downto 0);
-    signal count                : unsigned(26 downto 0);
-    signal clk_synchro_spectrum : std_logic;
+    signal addr                    : std_logic_vector(9 downto 0);
+    signal we                      : std_logic;
+    signal di                      : std_logic_vector(15 downto 0);
+    signal en                      : std_logic;
+    signal do                      : std_logic_vector(15 downto 0);
+    signal count                   : unsigned(26 downto 0);
+    signal clk_synchro_spectrum    : std_logic;
     --signal stamp : unsigned(15 downto 0);
+    signal probe0                  : STD_LOGIC_VECTOR(44 DOWNTO 0);
+    signal pipe_out_spectrum_wr_en : std_logic;
 
 begin
 
@@ -86,7 +88,26 @@ begin
             i_energy_level_max        => i_Energy_level_max,
             -- out spectrum to fifo pipe out
             o_pipe_out_spectrum_din   => o_pipe_out_spectrum_din,
-            o_pipe_out_spectrum_wr_en => o_pipe_out_spectrum_wr_en
+            o_pipe_out_spectrum_wr_en => pipe_out_spectrum_wr_en
         );
+
+    label_ila : entity work.ila_0
+        port map(
+            clk    => i_clk_slow,
+            probe0 => probe0
+        );
+    --    probe0(0)           <= pipe_in_rd_en;
+    --    probe0(1)           <= pipe_in_valid;
+    --    probe0(2)           <= pipe_in_empty;
+    --    probe0(34 downto 3) <= pipe_in_dout;
+
+    probe0(44)           <= pipe_out_spectrum_wr_en;
+    probe0(43)           <= en;
+    probe0(42)           <= we;
+    probe0(41 downto 32) <= addr;
+    probe0(31 downto 16) <= di;
+    probe0(15 downto 0)  <= do;
+
+    o_pipe_out_spectrum_wr_en <= pipe_out_spectrum_wr_en;
 
 end architecture RTL;

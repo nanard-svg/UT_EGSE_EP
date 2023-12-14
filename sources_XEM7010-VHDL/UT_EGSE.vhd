@@ -70,7 +70,7 @@ architecture arch of UT_EGSE is
     signal led_buf        : STD_LOGIC_VECTOR(7 downto 0);
 
     signal ep01wire             : STD_LOGIC_VECTOR(31 downto 0);
-    signal probe0               : STD_LOGIC_VECTOR(34 DOWNTO 0);
+
     signal pipe_in_config_din   : STD_LOGIC_VECTOR(31 downto 0);
     signal pipe_in_config_wr_en : STD_LOGIC;
     signal pipe_in_config_rd_en : STD_LOGIC;
@@ -492,19 +492,6 @@ begin
     --  pipe out spectrum
     epA2 : okPipeOut port map(okHE => okHE, okEH => okEHx(6 * 65 - 1 downto 5 * 65), ep_addr => x"A2", ep_read => pipe_out_spectrum_rd_en, ep_datain => pipe_out_spectrum_dout);
 
-    label_ila : entity work.ila_0
-        port map(
-            clk    => sys_clk,
-            probe0 => probe0
-        );
-    --    probe0(0)           <= pipe_in_rd_en;
-    --    probe0(1)           <= pipe_in_valid;
-    --    probe0(2)           <= pipe_in_empty;
-    --    probe0(34 downto 3) <= pipe_in_dout;
 
-    probe0(34)          <= pipe_in_empty;
-    probe0(33)          <= pipe_in_rd_en;
-    probe0(32)          <= pipe_in_valid;
-    probe0(31 downto 0) <= std_logic_vector(pipe_in_dout(31 downto 0));
 
 end arch;

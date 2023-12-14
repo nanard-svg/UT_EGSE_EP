@@ -27,10 +27,11 @@ end entity spectrum_FSM;
 
 architecture RTL of spectrum_FSM is
 
-    type state_type is (init_ram, detect_energy_max_ready, read_ram, write_ram, first_data_to_gse, write_to_gse, last_data_to_gse, end_write_to_gse);
+    type state_type is (init_ram, fix_out_ram, detect_energy_max_ready, read_ram, write_ram, first_data_to_gse, write_to_gse, last_data_to_gse, end_write_to_gse);
     signal state    : state_type;
-    signal addr     : std_logic_vector(9 downto 0);
-    signal old_addr : std_logic_vector(9 downto 0);
+    signal addr     : unsigned(9 downto 0);
+    signal old_addr : unsigned(9 downto 0);
+    signal trig     : std_logic;
 
 begin
 
@@ -45,6 +46,7 @@ begin
             old_addr                  <= (others => '0');
             o_di                      <= (others => '0');
             o_pipe_out_spectrum_din   <= (others => '0');
+            trig                      <= '0';
             o_pipe_out_spectrum_wr_en <= '0';
 
         --stamp <= (others => '0');
@@ -55,16 +57,37 @@ begin
 
                 when init_ram =>
 
-                    o_di <= (others => '0');
-                    --addr <= std_logic_vector(unsigned(addr) + to_unsigned(1, 10));
-                    addr <= std_logic_vector(unsigned(addr) + 1);
-                    o_we <= '1';
-                    o_en <= '1';
-                    --if To_integer(unsigned(o_addr)) = 65536-1 tho_en
-                    if To_integer(unsigned(addr)) = 1024 - 1 then
-                        state <= detect_energy_max_ready;
-                        o_we  <= '0';
+                    if trig = '0' then
+
+                        o_di <= (others => '0');
+                        --addr <= std_logic_vector(unsigned(addr) + to_unsigned(1, 10));
+                        addr <= (addr) + 1;
+                        o_we <= '1';
+                        o_en <= '1';
+                        --if To_integer(unsigned(o_addr)) = 65536-1 tho_en
+                        if To_integer(unsigned(addr)) = 1024 - 1 then
+                            addr <= To_unsigned(1024 - 1, 10);
+                            trig <= '1';
+                        end if;
+
+                    else
+
+                        o_di <= (others => '0');
+                        --addr <= std_logic_vector(unsigned(addr) + to_unsigned(1, 10));
+                        addr <= (addr) - 1;
+                        o_we <= '1';
+                        o_en <= '1';
+                        --if To_integer(unsigned(o_addr)) = 65536-1 tho_en
+                        if To_integer(unsigned(addr)) = 0 then
+                            addr  <= To_unsigned(0, 10);
+                            state <= detect_energy_max_ready;
+                            o_we  <= '0';
+                            o_en  <= '0';
+                        end if;
+
                     end if;
+
+
 
                 when detect_energy_max_ready =>
 
@@ -77,10 +100,10 @@ begin
                         old_addr <= (others => '0');
                         o_en     <= '1';
                         o_we     <= '0';
-                        
+
                     else
                         if i_ready_energy_level_max = '1' then
-                            addr  <= std_logic_vector(i_energy_level_max(15 downto 6));
+                            addr  <= unsigned(i_energy_level_max(15 downto 6));
                             o_en  <= '1';
                             state <= read_ram;
                         end if;
@@ -99,29 +122,39 @@ begin
                     o_we  <= '1';
                     --o_di  <= std_logic_vector(unsigned(i_do) + to_unsigned(1, 16));
                     o_di  <= std_logic_vector(unsigned(i_do) + 1);
-                    state <= detect_energy_max_ready;
+                    state <= fix_out_ram;
+                    
+
+                when fix_out_ram =>
+ 
+                    addr  <= To_unsigned(0, 10);                               
+                    o_we <= '0';
+                    o_en <= '1';
+                    state <= detect_energy_max_ready;                    
+                    
 
                 when first_data_to_gse =>
 
-                    addr     <= std_logic_vector(unsigned(addr) + 1);
+                    addr     <= (addr) + 1;
                     old_addr <= addr;
                     state    <= write_to_gse;
 
                 when write_to_gse =>
 
-                    addr     <= std_logic_vector(unsigned(addr) + 1);
+                    addr     <= (addr) + 1;
                     old_addr <= addr;
 
                     o_pipe_out_spectrum_wr_en <= '1';
-                    o_pipe_out_spectrum_din   <= "000000" & old_addr & i_do;
+                    o_pipe_out_spectrum_din   <= "000000" & std_logic_vector(old_addr) & i_do;
 
-                    if To_integer(unsigned(addr)) = (1024 - 1) then
+                    if To_integer(addr) = (1024 - 1) then
+                        addr  <= To_unsigned(1024 - 1, 10);
                         o_en  <= '0';
                         state <= last_data_to_gse;
                     end if;
 
                 when last_data_to_gse =>
-                    o_pipe_out_spectrum_din <= "000000" & old_addr & i_do;
+                    o_pipe_out_spectrum_din <= "000000" & std_logic_vector(old_addr) & i_do;
                     state                   <= end_write_to_gse;
 
                 when end_write_to_gse =>
@@ -134,6 +167,6 @@ begin
         end if;
     end process;
 
-    o_addr <= addr;
+    o_addr <= std_logic_vector(addr);
 
 end architecture RTL;
