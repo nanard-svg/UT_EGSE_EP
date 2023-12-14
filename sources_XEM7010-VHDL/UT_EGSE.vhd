@@ -69,7 +69,7 @@ architecture arch of UT_EGSE is
     signal pipe_out_rd_en : STD_LOGIC;
     signal led_buf        : STD_LOGIC_VECTOR(7 downto 0);
 
-    signal ep01wire             : STD_LOGIC_VECTOR(31 downto 0);
+    signal ep01wire : STD_LOGIC_VECTOR(31 downto 0);
 
     signal pipe_in_config_din   : STD_LOGIC_VECTOR(31 downto 0);
     signal pipe_in_config_wr_en : STD_LOGIC;
@@ -112,11 +112,13 @@ architecture arch of UT_EGSE is
     signal TH_rise              : std_logic_vector(31 downto 0);
     signal TH_fall              : std_logic_vector(31 downto 0);
 
-    signal pipe_out_spectrum_rd_en : std_logic;
-    signal pipe_out_spectrum_dout  : std_logic_vector(31 downto 0);
-    signal pipe_out_spectrum_din   : STD_LOGIC_VECTOR(31 downto 0);
-    signal pipe_out_spectrum_wr_en : STD_LOGIC;
-    signal pipe_out_rd_data_count_spectrum: std_logic_vector(10 downto 0);
+    signal pipe_out_spectrum_rd_en         : std_logic;
+    signal pipe_out_spectrum_dout          : std_logic_vector(31 downto 0);
+    signal pipe_out_spectrum_din           : STD_LOGIC_VECTOR(31 downto 0);
+    signal pipe_out_spectrum_wr_en         : STD_LOGIC;
+    signal pipe_out_rd_data_count_spectrum : std_logic_vector(10 downto 0);
+    signal pipe_out_spectrum_wr_en_fifo    : std_logic;
+    signal pipe_out_spectrum_din_fifo      : STD_LOGIC_VECTOR(31 downto 0);
 
 begin
 
@@ -323,6 +325,21 @@ begin
         );
 
     ------------------------------------------
+    --  process trigger raw data
+    ------------------------------------------ 
+
+    process(sys_clk, reset) is
+    begin
+        if reset = '1' then
+            pipe_out_spectrum_wr_en_fifo <= '0';
+            pipe_out_spectrum_din_fifo   <= (others => '0');
+        elsif rising_edge(sys_clk) then
+            pipe_out_spectrum_wr_en_fifo <= pipe_out_spectrum_wr_en;
+            pipe_out_spectrum_din_fifo   <= pipe_out_spectrum_din;
+        end if;
+    end process;
+
+    ------------------------------------------
     --  FSM raw data
     ------------------------------------------
 
@@ -391,8 +408,8 @@ begin
             rst           => reset,
             wr_clk        => sys_clk,
             rd_clk        => okClk,
-            din           => pipe_out_spectrum_din,
-            wr_en         => pipe_out_spectrum_wr_en,
+            din           => pipe_out_spectrum_din_fifo,
+            wr_en         => pipe_out_spectrum_wr_en_fifo,
             rd_en         => pipe_out_spectrum_rd_en,
             dout          => pipe_out_spectrum_dout,
             full          => open,
@@ -453,8 +470,7 @@ begin
             ep20wire <= "000000000000000000000" & pipe_out_rd_data_count;
         end if;
     end process;
-    
-    
+
     ------------------------------------------
     --  wire out for FIFO pipe out spectrum. 
     ------------------------------------------
@@ -481,7 +497,7 @@ begin
 
     --  read wire in
     ep20 : okWireOut port map(okHE => okHE, okEH => okEHx(1 * 65 - 1 downto 0 * 65), ep_addr => x"20", ep_datain => ep20wire);
-        --  read wire in
+    --  read wire in
     ep21 : okWireOut port map(okHE => okHE, okEH => okEHx(2 * 65 - 1 downto 1 * 65), ep_addr => x"21", ep_datain => ep21wire);
     --  pipe in injection
     ep80 : okPipeIn port map(okHE => okHE, okEH => okEHx(3 * 65 - 1 downto 2 * 65), ep_addr => x"80", ep_write => pipe_in_wr_en, ep_dataout => pipe_in_din);
@@ -491,7 +507,5 @@ begin
     epA1 : okPipeOut port map(okHE => okHE, okEH => okEHx(5 * 65 - 1 downto 4 * 65), ep_addr => x"A1", ep_read => pipe_out_rd_en, ep_datain => pipe_out_dout);
     --  pipe out spectrum
     epA2 : okPipeOut port map(okHE => okHE, okEH => okEHx(6 * 65 - 1 downto 5 * 65), ep_addr => x"A2", ep_read => pipe_out_spectrum_rd_en, ep_datain => pipe_out_spectrum_dout);
-
-
 
 end arch;

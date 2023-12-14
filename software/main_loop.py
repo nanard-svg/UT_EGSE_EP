@@ -226,9 +226,9 @@ for file_name in file_names:
 adress_wire_out_science = 0x21
 des.getwire(adress_wire_out_science)
 while (get != 1024):
-    #print("############################################")
-    #print("read pointer spectrum  {}".format(get))
-    #print("############################################")
+    print("############################################")
+    print("read pointer spectrum  {}".format(get))
+    print("############################################")
     des.getwire(adress_wire_out_science)
 
 
