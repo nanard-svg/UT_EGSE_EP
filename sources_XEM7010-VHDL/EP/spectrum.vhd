@@ -53,7 +53,7 @@ begin
     -- File: rams_sp_nc.vhd 
     ------------------------------------------
 
-    label_rame_one : entity work.rams_sp_nc
+    label_rame_one : entity work.rams_sp_rf
         port map(
             clk  => i_clk_slow,
             we   => we,

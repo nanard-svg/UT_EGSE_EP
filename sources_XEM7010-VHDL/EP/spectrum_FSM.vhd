@@ -42,7 +42,7 @@ begin
             state                     <= init_ram;
             o_we                      <= '1';
             o_en                      <= '1';
-            addr                      <= (others => '0');
+            addr                      <= (others => '1');
             old_addr                  <= (others => '0');
             o_di                      <= (others => '0');
             o_pipe_out_spectrum_din   <= (others => '0');
@@ -57,22 +57,6 @@ begin
 
                 when init_ram =>
 
-                    if trig = '0' then
-
-                        if To_integer(unsigned(addr)) = 1024 - 1 then
-                            addr <= To_unsigned(1024 - 1, 10);
-                            trig <= '1';
-                        else
-                            o_di <= (others => '0');
-                            --addr <= std_logic_vector(unsigned(addr) + to_unsigned(1, 10));
-                            addr <= (addr) + 1;
-                            o_we <= '1';
-                            o_en <= '1';
-                            --if To_integer(unsigned(o_addr)) = 65536-1 tho_en
-                        end if;
-
-                    else
-
                         if To_integer(unsigned(addr)) = 0 then
                             addr  <= To_unsigned(0, 10);
                             state <= detect_energy_max_ready;
@@ -86,9 +70,7 @@ begin
                             o_en <= '1';
                             --if To_integer(unsigned(o_addr)) = 65536-1 tho_en
                         end if;
-
-                    end if;
-
+ 
                 when detect_energy_max_ready =>
 
                     o_en <= '0';

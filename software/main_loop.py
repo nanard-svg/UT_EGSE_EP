@@ -90,6 +90,16 @@ class DESTester:
         self.xem.SetWireInValue(0x01, level_trig)
         self.xem.UpdateWireIns()
 
+    def setwire_TH_rise(self):
+
+        self.xem.SetWireInValue(0x02, TH_rise)
+        self.xem.UpdateWireIns()
+
+    def setwire_TH_fall(self):
+
+        self.xem.SetWireInValue(0x03, TH_fall)
+        self.xem.UpdateWireIns()
+
     def getwire(self,adress_wire_out_science):
         global get
         self.xem.UpdateWireOuts();
@@ -144,6 +154,20 @@ level_trig=-29000
 level_trig=int(np.uint32(level_trig))
 print(level_trig)
 des.setwire()
+
+print ("set trigger_TH_rise")
+#level_trig=0xFFFF8EB8
+TH_rise=256
+TH_rise=int(np.uint32(TH_rise))
+print(TH_rise)
+des.setwire_TH_rise()
+
+print ("set trigger_TH_fall")
+#level_trig=0xFFFF8EB8
+TH_fall=256
+TH_fall=int(np.uint32(TH_fall))
+print(TH_fall)
+des.setwire_TH_fall()
 
 
 ###################################  START CAPTURE  ###############################################
