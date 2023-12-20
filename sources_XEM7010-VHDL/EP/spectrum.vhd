@@ -17,16 +17,25 @@ end entity spectrum;
 
 architecture RTL of spectrum is
 
-    signal addr                    : std_logic_vector(9 downto 0);
-    signal we                      : std_logic;
-    signal di                      : std_logic_vector(15 downto 0);
-    signal en                      : std_logic;
-    signal do                      : std_logic_vector(15 downto 0);
-    signal count                   : unsigned(26 downto 0);
-    signal clk_synchro_spectrum    : std_logic;
+    -- RAM 
+    type Array_addr_type is array (1 downto 0) of std_logic_vector(9 downto 0);
+    signal addr : Array_addr_type;
+    type Array_di_type is array (1 downto 0) of std_logic_vector(15 downto 0);
+    signal di   : Array_di_type;
+    type Array_do_type is array (1 downto 0) of std_logic_vector(15 downto 0);
+    signal do   : Array_do_type;
+    signal we   : std_logic_vector(1 downto 0);
+    signal en   : std_logic_vector(1 downto 0);
+
+    signal count                : unsigned(26 downto 0);
+    signal clk_synchro_spectrum : std_logic;
     --signal stamp : unsigned(15 downto 0);
-    signal probe0                  : STD_LOGIC_VECTOR(44 DOWNTO 0);
-    signal pipe_out_spectrum_wr_en : std_logic;
+    signal probe0               : STD_LOGIC_VECTOR(44 DOWNTO 0);
+
+    -- out spectrum to fifo pipe out
+    type Array_din_type is array (1 downto 0) of std_logic_vector(31 downto 0);
+    signal pipe_out_spectrum_din   : Array_din_type;
+    signal pipe_out_spectrum_wr_en : std_logic_vector(1 downto 0);
 
 begin
 
@@ -53,15 +62,17 @@ begin
     -- File: rams_sp_nc.vhd 
     ------------------------------------------
 
-    label_rame_one : entity work.rams_sp_rf
-        port map(
-            clk  => i_clk_slow,
-            we   => we,
-            en   => en,
-            addr => addr,
-            di   => di,
-            do   => do
-        );
+    generate_RAM : for N IN 1 downto 0 generate
+        label_rame_one : entity work.rams_sp_rf
+            port map(
+                clk  => i_clk_slow,
+                we   => we(N),
+                en   => en(N),
+                addr => addr(N),
+                di   => di(N),
+                do   => do(N)
+            );
+    end generate generate_RAM;
 
     ------------------------------------------
     -- 
@@ -69,45 +80,48 @@ begin
     --
     ------------------------------------------
 
-    label_spectrum_FSM : entity work.spectrum_FSM
-        port map(
-            -- global
-            i_clk_slow                => i_clk_slow,
-            i_reset                   => i_reset,
-            -- synchro_spectrum
-            i_clk_synchro_spectrum    => clk_synchro_spectrum,
-            i_set_synchro_spectrum    => '1',
-            -- RAM
-            o_we                      => we,
-            o_en                      => en,
-            o_addr                    => addr,
-            o_di                      => di,
-            i_do                      => do,
-            -- input from detect Energy level
-            i_ready_energy_level_max  => i_readyEnergy_level_max,
-            i_energy_level_max        => i_Energy_level_max,
-            -- out spectrum to fifo pipe out
-            o_pipe_out_spectrum_din   => o_pipe_out_spectrum_din,
-            o_pipe_out_spectrum_wr_en => pipe_out_spectrum_wr_en
-        );
+    generate_label_spectrum_FSM : for N IN 1 downto 0 generate
+        label_spectrum_FSM : entity work.spectrum_FSM
+            port map(
+                -- global
+                i_clk_slow                => i_clk_slow,
+                i_reset                   => i_reset,
+                -- synchro_spectrum
+                i_clk_synchro_spectrum    => clk_synchro_spectrum,
+                i_set_synchro_spectrum    => std_logic_vector(To_unsigned(N, 1)),
+                -- RAM
+                o_we                      => we(N),
+                o_en                      => en(N),
+                o_addr                    => addr(N),
+                o_di                      => di(N),
+                i_do                      => do(N),
+                -- input from detect Energy level
+                i_ready_energy_level_max  => i_readyEnergy_level_max,
+                i_energy_level_max        => i_Energy_level_max,
+                -- out spectrum to fifo pipe out
+                o_pipe_out_spectrum_din   => pipe_out_spectrum_din(N),
+                o_pipe_out_spectrum_wr_en => pipe_out_spectrum_wr_en(N)
+            );
+    end generate generate_label_spectrum_FSM;
 
-    label_ila : entity work.ila_0
-        port map(
-            clk    => i_clk_slow,
-            probe0 => probe0
-        );
-    --    probe0(0)           <= pipe_in_rd_en;
-    --    probe0(1)           <= pipe_in_valid;
-    --    probe0(2)           <= pipe_in_empty;
-    --    probe0(34 downto 3) <= pipe_in_dout;
+    o_pipe_out_spectrum_din   <= pipe_out_spectrum_din(1) when clk_synchro_spectrum = '0' else pipe_out_spectrum_din(1);
+    o_pipe_out_spectrum_wr_en <= pipe_out_spectrum_wr_en(1) when clk_synchro_spectrum = '0' else pipe_out_spectrum_wr_en(1);
 
-    probe0(44)           <= pipe_out_spectrum_wr_en;
-    probe0(43)           <= en;
-    probe0(42)           <= we;
-    probe0(41 downto 32) <= addr;
-    probe0(31 downto 16) <= di;
-    probe0(15 downto 0)  <= do;
-
-    o_pipe_out_spectrum_wr_en <= pipe_out_spectrum_wr_en;
+    --    label_ila : entity work.ila_0
+    --        port map(
+    --            clk    => i_clk_slow,
+    --            probe0 => probe0
+    --        );
+    --    --    probe0(0)           <= pipe_in_rd_en;
+    --    --    probe0(1)           <= pipe_in_valid;
+    --    --    probe0(2)           <= pipe_in_empty;
+    --    --    probe0(34 downto 3) <= pipe_in_dout;
+    --
+    --    probe0(44)           <= pipe_out_spectrum_wr_en;
+    --    probe0(43)           <= en;
+    --    probe0(42)           <= we;
+    --    probe0(41 downto 32) <= addr;
+    --    probe0(31 downto 16) <= di;
+    --    probe0(15 downto 0)  <= do;
 
 end architecture RTL;

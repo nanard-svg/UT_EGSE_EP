@@ -270,17 +270,15 @@ for i in range(2):
     for elm in list_array_pipe_out :
         #list_array_pipe_out_MSB.append(int(elm/2**16))
         list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
-         # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
+        #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
         list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
-        #print("type",type(elm))
+        #print("energy : {}".format(np.short(elm & 0xFFFF)))
         print("spectrum",hex(elm))
 
 
 
-
-#print("############################################")
-#print("list_array_pipe_out_MSB ", list_array_pipe_out_MSB)
-#print("list_array_pipe_out_MSB", list_array_pipe_out_LSB)
+plt.plot(list_array_pipe_out_LSB,list_array_pipe_out_MSB)
+plt.show()
 
 
 print("script done")
