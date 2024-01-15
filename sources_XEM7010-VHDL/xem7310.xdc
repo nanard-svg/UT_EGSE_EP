@@ -126,7 +126,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {sck}]
 set_property PACKAGE_PIN V9 [get_ports {cnv}]
 set_property IOSTANDARD LVCMOS33 [get_ports {cnv}] 
 #J1-24 
-set_property PACKAGE_PIN Y8 [get_ports {sdi}] 
+set_property PACKAGE_PIN V8 [get_ports {sdi}] 
 set_property IOSTANDARD LVCMOS33 [get_ports {sdi}]
 set_property PULLUP {TRUE} [get_ports sdi]
 #J1-22 

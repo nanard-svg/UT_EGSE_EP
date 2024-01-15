@@ -50,7 +50,7 @@ begin
             clk_synchro_spectrum <= '0';
         elsif rising_edge(i_clk_slow) then
             count <= count + 1;
-            if To_integer(count) = 100000000 then
+            if To_integer(count) = 10000000 then
                 clk_synchro_spectrum <= not clk_synchro_spectrum;
                 count                <= (others => '0');
             end if;
@@ -104,8 +104,8 @@ begin
             );
     end generate generate_label_spectrum_FSM;
 
-    o_pipe_out_spectrum_din   <= pipe_out_spectrum_din(1) when clk_synchro_spectrum = '0' else pipe_out_spectrum_din(1);
-    o_pipe_out_spectrum_wr_en <= pipe_out_spectrum_wr_en(1) when clk_synchro_spectrum = '0' else pipe_out_spectrum_wr_en(1);
+    o_pipe_out_spectrum_din   <= pipe_out_spectrum_din(0) when clk_synchro_spectrum = '0' else pipe_out_spectrum_din(1);
+    o_pipe_out_spectrum_wr_en <= pipe_out_spectrum_wr_en(0) when clk_synchro_spectrum = '0' else pipe_out_spectrum_wr_en(1);
 
     --    label_ila : entity work.ila_0
     --        port map(
