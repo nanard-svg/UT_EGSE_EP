@@ -43,7 +43,7 @@ begin
     --  CDC after Injection
     ------------------------------------------
 
-    label_cdc : entity work.Fast_to_Slow_CDC_lite
+    label_cdc : entity work.Fast_to_Slow_CDC
         port map(
             --global
             i_reset    => i_reset,

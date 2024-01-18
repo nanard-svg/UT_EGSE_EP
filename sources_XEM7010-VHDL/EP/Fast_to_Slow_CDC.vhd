@@ -12,8 +12,8 @@ entity Fast_to_Slow_CDC is
         i_ready    : in  std_logic;
         o_ready    : out std_logic;
         --data science
-        i_data     : in  std_logic_vector(15 downto 0);
-        o_data     : out std_logic_vector(15 downto 0)
+        i_data     : in  signed(15 downto 0);
+        o_data     : out signed(15 downto 0)
     );
 end entity Fast_to_Slow_CDC;
 

@@ -118,17 +118,14 @@ set_property PACKAGE_PIN B17 [get_ports {led[7]}]
 set_property IOSTANDARD LVCMOS15 [get_ports {led[*]}]
 
 #set_property PACKAGE_PIN K3 [get_ports {clk_60Mhz}]
-#set_property IOSTANDARD LVCMOS33 [get_ports {clk_60Mhz}]
+#set_property IOSTANDARD LVCMOS33  [get_ports {clk_60Mhz}]
 #J1-20
-set_property PACKAGE_PIN V7 [get_ports {sck}] 
-set_property IOSTANDARD LVCMOS33 [get_ports {sck}]
-#J1-16  
-set_property PACKAGE_PIN V9 [get_ports {cnv}]
-set_property IOSTANDARD LVCMOS33 [get_ports {cnv}] 
+set_property -dict {PACKAGE_PIN V7 IOSTANDARD LVCMOS33 DRIVE 8 SLEW SLOW} [get_ports {sck}]
+#J1-16
+set_property -dict {PACKAGE_PIN V9 IOSTANDARD LVCMOS33 DRIVE 8 SLEW SLOW} [get_ports {cnv}] 
 #J1-24 
 set_property PACKAGE_PIN V8 [get_ports {sdi}] 
 set_property IOSTANDARD LVCMOS33 [get_ports {sdi}]
-set_property PULLUP {TRUE} [get_ports sdi]
-#J1-22 
-set_property PACKAGE_PIN W7 [get_ports {sdo}] 
-set_property IOSTANDARD LVCMOS33 [get_ports {sdo}]
+#set_property PULLUP {TRUE} [get_ports sdi]
+#J1-22
+set_property -dict {PACKAGE_PIN W7 IOSTANDARD LVCMOS33 DRIVE 8 SLEW SLOW} [get_ports {sdo}]

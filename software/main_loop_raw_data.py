@@ -17,7 +17,7 @@ list_array_pipe_out_LSB = []
 
 
 
-file_names = ['Signal_ADC_100keV.txt']
+file_names = ['Signal_ADC_20keV.txt', 'Signal_ADC_100keV.txt','Signal_ADC_100keV.txt','Signal_ADC_200keV.txt','Signal_ADC_200keV.txt','Signal_ADC_400keV.txt','Signal_ADC_400keV.txt', 'Signal_ADC_600keV.txt','Signal_ADC_800keV.txt','Signal_ADC_800keV.txt','Signal_ADC_800keV.txt', 'Signal_ADC_1000keV.txt', 'Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_1000keV.txt']
 
 #list_pipe_in_array = np.ones(2048).astype(int)
 
@@ -157,14 +157,14 @@ des.setwire()
 
 print ("set trigger_TH_rise")
 #level_trig=0xFFFF8EB8
-TH_rise=500
+TH_rise=0
 TH_rise=int(np.uint32(TH_rise))
 print(TH_rise)
 des.setwire_TH_rise()
 
 print ("set trigger_TH_fall")
 #level_trig=0xFFFF8EB8
-TH_fall=500
+TH_fall=0
 TH_fall=int(np.uint32(TH_fall))
 print(TH_fall)
 des.setwire_TH_fall()
@@ -191,44 +191,94 @@ for file_name in file_names:
     print("max ", max(formated_lines))
     print("max-min", max(formated_lines)-min(formated_lines))
 
-for c in range(160):
-
-    adress_wire_out_science = 0x21
-    des.getwire(adress_wire_out_science)
-    while (get != 1024):
-        #print("############################################")
-        #print("read pointer spectrum  {}".format(get))
-        #print("############################################")
-        des.getwire(adress_wire_out_science)
-
-    print("################################ READ FIFO  Pipe spectrum #############################################")
-    print("read pointer spectrum  {}".format(get))
-
-    for i in range(2):
-
-
-        adresse_pipe_out_read=0xA2
-        des.getpipeout(adresse_pipe_out_read)
-        #print(array_pipe_out.itemsize)
-        #print("print array_pipe_out  {}".format(array_pipe_out))
-        list_array_pipe_out = list(array_pipe_out)
-
-        ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
-
-        for elm in list_array_pipe_out :
-            #list_array_pipe_out_MSB.append(int(elm/2**16))
-            list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
-            #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
-            list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
-            #print("energy : {}".format(np.short(elm & 0xFFFF)))
-            if (np.short(elm & 0xFFFF)) != 0 :
-                print("spectrum",hex(elm))
-
-    #################################### write formated_lines to pipe in injection ##########################################
+#################################### write formated_lines to pipe in injection ##########################################
     list_pipe_in_array = np.array(formated_lines)
-    # print("list_pipe_in_array{}".format(list_pipe_in_array))
+    #print("list_pipe_in_array{}".format(list_pipe_in_array))
     adresse = 0x80
     des.setpipein(list_pipe_in_array, adresse)
+
+################################### TEST fifo pipe out read pointer##############################################
+    adress_wire_out_science = 0x20
+    des.getwire(adress_wire_out_science)
+    while (get != 512):
+        print("############################################")
+        print("read pointer  {}".format(get))
+        print("############################################")
+        des.getwire(adress_wire_out_science)
+
+    #print("############################################")
+    #print("read pointer  {}".format(get))
+    #print("############################################")
+
+################################ READ FIFO  Pipe out raw data science #############################################
+    adresse_pipe_out_read=0xA1
+    des.getpipeout(adresse_pipe_out_read)
+    #print(array_pipe_out.itemsize)
+    #print("print array_pipe_out  {}".format(array_pipe_out))
+    list_array_pipe_out = list(array_pipe_out)
+
+################### SPLITE 32 bit Science from Pipe out ##########################################################
+
+    for elm in list_array_pipe_out :
+        #list_array_pipe_out_MSB.append(int(elm/2**16))
+        list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+        # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
+        list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+
+    print("############################################")
+    print("resultat de file_name {}".format(file_name))
+    print("indice de fichier{}:".format(indice))
+    print("max ", max(list_array_pipe_out_MSB))
+    print("min", min(list_array_pipe_out_MSB))
+    print("max-min", max(list_array_pipe_out_MSB)-min(list_array_pipe_out_MSB))
+
+############################ write "list_array_pipe_out file" in file indice name  ##########################################
+    file_name_out = f"{indice}.txt"
+    file = open(file_name_out, "w")
+    for items in list_array_pipe_out_MSB:
+        file.write('%s\n' % items)
+    file.close()
+    indice+=1
+
+    plt.plot(list_array_pipe_out_LSB)
+    plt.plot(list_array_pipe_out_MSB)
+    plt.show()
+
+
+
+
+adress_wire_out_science = 0x21
+des.getwire(adress_wire_out_science)
+while (get != 1024):
+    print("############################################")
+    print("read pointer spectrum  {}".format(get))
+    print("############################################")
+    des.getwire(adress_wire_out_science)
+
+
+for i in range(2):
+    print("################################ READ FIFO  Pipe spectrum #############################################")
+
+    adresse_pipe_out_read=0xA2
+    des.getpipeout(adresse_pipe_out_read)
+    #print(array_pipe_out.itemsize)
+    #print("print array_pipe_out  {}".format(array_pipe_out))
+    list_array_pipe_out = list(array_pipe_out)
+
+    ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
+
+    for elm in list_array_pipe_out :
+        #list_array_pipe_out_MSB.append(int(elm/2**16))
+        list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+        #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
+        list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+        #print("energy : {}".format(np.short(elm & 0xFFFF)))
+        print("spectrum",hex(elm))
+
+
+
+plt.plot(list_array_pipe_out_LSB,list_array_pipe_out_MSB)
+plt.show()
 
 
 print("script done")

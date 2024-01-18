@@ -970,11 +970,11 @@ begin
         FrontPanelReset;
         wait for 1 ns;
 
-        SetWireInValue(x"00", x"0000_0001", NO_MASK); -- Reset all design
+        SetWireInValue(x"00", x"8000_0001", NO_MASK); -- Reset all design
         UpdateWireIns;
-        SetWireInValue(x"00", x"0000_0000", NO_MASK); -- unReset all design 
+        SetWireInValue(x"00", x"8000_0000", NO_MASK); -- unReset all design 
         UpdateWireIns;
-        SetWireInValue(x"00", x"0000_0000", NO_MASK); -- set input ADC or Injection  
+        SetWireInValue(x"00", x"8000_0000", NO_MASK); -- set input ADC or Injection  
         UpdateWireIns;
 
         --wait for 700 us;                -- write raw data fifo almost full 
@@ -999,7 +999,7 @@ begin
         UpdateWireIns;
 
 
-        SetWireInValue(x"00", x"0000_0002", NO_MASK); -- start capture and unReset all design 
+        SetWireInValue(x"00", x"8000_0002", NO_MASK); -- start capture and unReset all design 
         UpdateWireIns;
 
         wait for 500 us;
