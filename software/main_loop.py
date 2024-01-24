@@ -17,7 +17,7 @@ list_array_pipe_out_LSB = []
 
 
 
-file_names = ['Signal_ADC_100keV.txt']
+file_names = ['Signal_ADC_20keV.txt','Signal_ADC_100keV.txt','Signal_ADC_200keV.txt','Signal_ADC_400keV.txt','Signal_ADC_600keV.txt','Signal_ADC_800keV.txt','Signal_ADC_1000keV.txt','Signal_ADC_3000keV.txt']
 
 #list_pipe_in_array = np.ones(2048).astype(int)
 
@@ -74,15 +74,15 @@ class DESTester:
         return(True)
 
     def ResetDES(self):
-        self.xem.SetWireInValue(0x00, 0x80000001)
+        self.xem.SetWireInValue(0x00, 0x00000001)
         self.xem.UpdateWireIns()
 
     def unResetDES(self):
-        self.xem.SetWireInValue(0x00, 0x80000000)
+        self.xem.SetWireInValue(0x00, 0x00000000)
         self.xem.UpdateWireIns()
 
     def start_capture(self):
-        self.xem.SetWireInValue(0x00, 0x80000002)
+        self.xem.SetWireInValue(0x00, 0x00000002)
         self.xem.UpdateWireIns()
 
     def setwire(self):
@@ -191,44 +191,44 @@ for file_name in file_names:
     print("max ", max(formated_lines))
     print("max-min", max(formated_lines)-min(formated_lines))
 
-for c in range(160):
+    for c in range(5):
 
-    adress_wire_out_science = 0x21
-    des.getwire(adress_wire_out_science)
-    while (get != 1024):
-        #print("############################################")
-        #print("read pointer spectrum  {}".format(get))
-        #print("############################################")
+        print("############## read pointer spectrum #####################")
+        adress_wire_out_science = 0x21
         des.getwire(adress_wire_out_science)
+        while (get != 1024):
+            #print("############################################")
+            #print("read pointer spectrum  {}".format(get))
+            #print("############################################")
+            des.getwire(adress_wire_out_science)
+        print("read pointer spectrum : {}".format(get))
 
-    print("################################ READ FIFO  Pipe spectrum #############################################")
-    print("read pointer spectrum  {}".format(get))
+        for i in range(2): # array_pipe_out tab 512 then 2*512 = 1024
 
-    for i in range(2):
+            #print("################################ READ FIFO  Pipe spectrum #############################################")
+            adresse_pipe_out_read=0xA2
+            des.getpipeout(adresse_pipe_out_read)
+            #print(array_pipe_out.itemsize)
+            #print("print array_pipe_out  {}".format(array_pipe_out))
+            list_array_pipe_out = list(array_pipe_out)
 
+            ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
 
-        adresse_pipe_out_read=0xA2
-        des.getpipeout(adresse_pipe_out_read)
-        #print(array_pipe_out.itemsize)
-        #print("print array_pipe_out  {}".format(array_pipe_out))
-        list_array_pipe_out = list(array_pipe_out)
+            for elm in list_array_pipe_out :
+                #list_array_pipe_out_MSB.append(int(elm/2**16))
+                list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+                #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
+                list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+                #print("energy : {}".format(np.short(elm & 0xFFFF)))
+                if (np.short(elm & 0xFFFF)) != 0 :
+                    print("spectrum",hex(elm))
 
-        ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
+        #################################### write formated_lines to pipe in INJECTION ##########################################
 
-        for elm in list_array_pipe_out :
-            #list_array_pipe_out_MSB.append(int(elm/2**16))
-            list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
-            #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
-            list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
-            #print("energy : {}".format(np.short(elm & 0xFFFF)))
-            if (np.short(elm & 0xFFFF)) != 0 :
-                print("spectrum",hex(elm))
-
-    #################################### write formated_lines to pipe in injection ##########################################
-    list_pipe_in_array = np.array(formated_lines)
-    # print("list_pipe_in_array{}".format(list_pipe_in_array))
-    adresse = 0x80
-    des.setpipein(list_pipe_in_array, adresse)
-
+        print("############## INJection #####################")
+        list_pipe_in_array = np.array(formated_lines)
+        # print("list_pipe_in_array{}".format(list_pipe_in_array))
+        adresse = 0x80
+        des.setpipein(list_pipe_in_array, adresse)
 
 print("script done")
