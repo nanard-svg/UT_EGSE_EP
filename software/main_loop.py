@@ -150,21 +150,21 @@ des.setpipein(list_pipe_in_array,adresse)
 ###################################  SET LEVEL TRIGG  ###############################################
 print ("set trigger_level")
 #level_trig=0xFFFF8EB8
-level_trig=0
+level_trig=5
 level_trig=int(np.uint32(level_trig))
 print(level_trig)
 des.setwire()
 
 print ("set trigger_TH_rise")
 #level_trig=0xFFFF8EB8
-TH_rise=500
+TH_rise=200
 TH_rise=int(np.uint32(TH_rise))
 print(TH_rise)
 des.setwire_TH_rise()
 
 print ("set trigger_TH_fall")
 #level_trig=0xFFFF8EB8
-TH_fall=500
+TH_fall=200
 TH_fall=int(np.uint32(TH_fall))
 print(TH_fall)
 des.setwire_TH_fall()
@@ -191,7 +191,7 @@ for file_name in file_names:
     print("max ", max(formated_lines))
     print("max-min", max(formated_lines)-min(formated_lines))
 
-    for c in range(5):
+    for c in range(10):
 
         print("############## read pointer spectrum #####################")
         adress_wire_out_science = 0x21

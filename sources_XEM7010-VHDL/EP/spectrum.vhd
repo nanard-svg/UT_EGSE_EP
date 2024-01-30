@@ -50,7 +50,7 @@ begin
             clk_synchro_spectrum <= '0';
         elsif rising_edge(i_clk_slow) then
             count <= count + 1;
-            if To_integer(count) = 1000000 then
+            if To_integer(count) = 10000000 then
                 clk_synchro_spectrum <= not clk_synchro_spectrum;
                 count                <= (others => '0');
             end if;

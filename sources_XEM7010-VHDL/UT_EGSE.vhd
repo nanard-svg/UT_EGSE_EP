@@ -119,6 +119,7 @@ architecture arch of UT_EGSE is
     signal pipe_out_rd_data_count_spectrum : std_logic_vector(10 downto 0);
     signal pipe_out_spectrum_wr_en_fifo    : std_logic;
     signal pipe_out_spectrum_din_fifo      : STD_LOGIC_VECTOR(31 downto 0);
+    signal empty                           : std_logic;
 
 begin
 
@@ -356,7 +357,8 @@ begin
             i_ready         => ready_after_filter,
             --output
             o_data          => data,
-            o_write_data    => write_data
+            o_write_data    => write_data,
+            i_empty         => empty
         );
 
     i_data_after_filter <= (data_after_filter) & (data_before_filter);
@@ -392,7 +394,7 @@ begin
             rd_en         => pipe_out_rd_en,
             dout          => pipe_out_dout,
             full          => open,
-            empty         => open,
+            empty         => empty,
             valid         => open,
             rd_data_count => pipe_out_rd_data_count,
             wr_rst_busy   => open,

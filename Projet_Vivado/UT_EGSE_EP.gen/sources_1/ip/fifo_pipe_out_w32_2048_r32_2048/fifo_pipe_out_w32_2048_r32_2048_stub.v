@@ -1,10 +1,10 @@
 // Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2020.2 (win64) Build 3064766 Wed Nov 18 09:12:45 MST 2020
-// Date        : Wed Dec 20 15:10:26 2023
+// Date        : Thu Jan 18 10:54:53 2024
 // Host        : DESKTOP-3HC2UMC running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode synth_stub
-//               c:/3UT/UT_EGSE_EP/Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_2048_r32_2048/fifo_pipe_out_w32_2048_r32_2048_stub.v
+// Command     : write_verilog -force -mode synth_stub -rename_top fifo_pipe_out_w32_2048_r32_2048 -prefix
+//               fifo_pipe_out_w32_2048_r32_2048_ fifo_pipe_out_w32_2048_r32_2048_stub.v
 // Design      : fifo_pipe_out_w32_2048_r32_2048
 // Purpose     : Stub declaration of top-level module interface
 // Device      : xc7a75tfgg484-1

@@ -14,7 +14,8 @@ entity FSM_raw_data is
         i_ready         : in  std_logic;
         --output
         o_data          : out signed(31 downto 0);
-        o_write_data    : out std_logic
+        o_write_data    : out std_logic;
+        i_empty         : in  std_logic
     );
 end entity FSM_raw_data;
 
@@ -97,7 +98,7 @@ begin
 
                     o_write_data <= '0';
 
-                    if i_level_trigger = '1' then -- level trigger & AND from trig in?
+                    if i_level_trigger = '1' and i_empty = '1' then -- level trigger & AND from trig in?
                         Raw_Sample_Count <= (others => '0');
                         Delay_Count      <= (others => '0');
                         state            <= DELAY;

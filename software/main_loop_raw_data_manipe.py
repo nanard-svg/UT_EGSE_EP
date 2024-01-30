@@ -74,15 +74,15 @@ class DESTester:
         return(True)
 
     def ResetDES(self):
-        self.xem.SetWireInValue(0x00, 0x00000001)
+        self.xem.SetWireInValue(0x00, 0x80000001)
         self.xem.UpdateWireIns()
 
     def unResetDES(self):
-        self.xem.SetWireInValue(0x00, 0x00000000)
+        self.xem.SetWireInValue(0x00, 0x80000000)
         self.xem.UpdateWireIns()
 
     def start_capture(self):
-        self.xem.SetWireInValue(0x00, 0x00000002)
+        self.xem.SetWireInValue(0x00, 0x80000002)
         self.xem.UpdateWireIns()
 
     def setwire(self):
@@ -150,21 +150,21 @@ des.setpipein(list_pipe_in_array,adresse)
 ###################################  SET LEVEL TRIGG  ###############################################
 print ("set trigger_level")
 #level_trig=0xFFFF8EB8
-level_trig= -29000
+level_trig= -10000  #-29000
 level_trig=int(np.uint32(level_trig))
 print(level_trig)
 des.setwire()
 
 print ("set trigger_TH_rise")
 #level_trig=0xFFFF8EB8
-TH_rise= -200
+TH_rise= -11000 #-200
 TH_rise=int(np.uint32(TH_rise))
 print(TH_rise)
 des.setwire_TH_rise()
 
 print ("set trigger_TH_fall")
 #level_trig=0xFFFF8EB8
-TH_fall= -200
+TH_fall= -11000 #-200
 TH_fall=int(np.uint32(TH_fall))
 print(TH_fall)
 des.setwire_TH_fall()
@@ -177,26 +177,8 @@ des.start_capture()
 #print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 
 
-for file_name in file_names:
-#################################### read file from list name ##########################################
-    file_name = open(file_name, "r")
-    lines = file_name.readlines()
-    formated_lines = []
-    for elm in lines:
-        formated_lines.append(int(elm[:-1]))
-    print("############################################")
-    print("file name fichier injecté {}".format(file_name))
-    #print("print formated lines {}".format(formated_lines)) #### print liste ONE file
-    print("min ", min(formated_lines))
-    print("max ", max(formated_lines))
-    print("max-min", max(formated_lines)-min(formated_lines))
 
-#################################### write formated_lines to pipe in injection ##########################################
-    list_pipe_in_array = np.array(formated_lines)
-    #print("list_pipe_in_array{}".format(list_pipe_in_array))
-    adresse = 0x80
-    des.setpipein(list_pipe_in_array, adresse)
-
+for c in range(20):
 ################################### TEST fifo pipe out read pointer##############################################
     adress_wire_out_science = 0x20
     des.getwire(adress_wire_out_science)
@@ -226,14 +208,12 @@ for file_name in file_names:
         list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
 
     print("############################################")
-    print("resultat de file_name {}".format(file_name))
     print("indice de fichier{}:".format(indice))
     print("max on output filter ", max(list_array_pipe_out_MSB))
     print("min on output filter", min(list_array_pipe_out_MSB))
     print("max-min on output filter", max(list_array_pipe_out_MSB)-min(list_array_pipe_out_MSB))
 
     print("############################################")
-    print("resultat de file_name {}".format(file_name))
     print("indice de fichier{}:".format(indice))
     print("max on input filter ", max(list_array_pipe_out_LSB))
     print("min on input filter", min(list_array_pipe_out_LSB))
@@ -250,42 +230,5 @@ for file_name in file_names:
     plt.plot(list_array_pipe_out_LSB)
     plt.plot(list_array_pipe_out_MSB)
     plt.show()
-
-
-
-
-adress_wire_out_science = 0x21
-des.getwire(adress_wire_out_science)
-while (get != 1024):
-    print("############################################")
-    print("read pointer spectrum  {}".format(get))
-    print("############################################")
-    des.getwire(adress_wire_out_science)
-
-
-for i in range(2):
-    print("################################ READ FIFO  Pipe spectrum #############################################")
-
-    adresse_pipe_out_read=0xA2
-    des.getpipeout(adresse_pipe_out_read)
-    #print(array_pipe_out.itemsize)
-    #print("print array_pipe_out  {}".format(array_pipe_out))
-    list_array_pipe_out = list(array_pipe_out)
-
-    ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
-
-    for elm in list_array_pipe_out :
-        #list_array_pipe_out_MSB.append(int(elm/2**16))
-        list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
-        #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
-        list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
-        #print("energy : {}".format(np.short(elm & 0xFFFF)))
-        print("spectrum",hex(elm))
-
-
-
-plt.plot(list_array_pipe_out_LSB,list_array_pipe_out_MSB)
-plt.show()
-
 
 print("script done")
