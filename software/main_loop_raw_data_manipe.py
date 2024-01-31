@@ -182,7 +182,7 @@ for c in range(20):
 ################################### TEST fifo pipe out read pointer##############################################
     adress_wire_out_science = 0x20
     des.getwire(adress_wire_out_science)
-    while (get != 512):
+    while ((get != 1024) and (get != 512)):
         print("############################################")
         print("read pointer  {}".format(get))
         print("############################################")
@@ -193,6 +193,7 @@ for c in range(20):
     #print("############################################")
 
 ################################ READ FIFO  Pipe out raw data science #############################################
+    array_pipe_out = np.ones(get).astype(int)
     adresse_pipe_out_read=0xA1
     des.getpipeout(adresse_pipe_out_read)
     #print(array_pipe_out.itemsize)
