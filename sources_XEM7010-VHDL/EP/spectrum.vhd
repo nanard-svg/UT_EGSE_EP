@@ -7,11 +7,13 @@ entity spectrum is
         i_clk_slow                : in  std_logic;
         i_reset                   : in  std_logic;
         -- input from detect Energy level
+        i_enable_erase            : in  std_logic;
         i_Energy_level_max        : in  signed(15 downto 0);
         i_readyEnergy_level_max   : in  std_logic;
         -- out spectrum to fifo pipe out
         o_pipe_out_spectrum_din   : out std_logic_vector(31 downto 0);
-        o_pipe_out_spectrum_wr_en : out std_logic
+        o_pipe_out_spectrum_wr_en : out std_logic;
+        o_spectrum_count_pulse    : out std_logic_vector(31 downto 0)
     );
 end entity spectrum;
 
@@ -36,6 +38,7 @@ architecture RTL of spectrum is
     type Array_din_type is array (1 downto 0) of std_logic_vector(31 downto 0);
     signal pipe_out_spectrum_din   : Array_din_type;
     signal pipe_out_spectrum_wr_en : std_logic_vector(1 downto 0);
+    signal spectrum_pulse_by_filter        : Array_din_type;
 
 begin
 
@@ -89,6 +92,7 @@ begin
                 -- synchro_spectrum
                 i_clk_synchro_spectrum    => clk_synchro_spectrum,
                 i_set_synchro_spectrum    => std_logic_vector(To_unsigned(N, 1)),
+                i_enable_erase            => i_enable_erase,
                 -- RAM
                 o_we                      => we(N),
                 o_en                      => en(N),
@@ -100,12 +104,26 @@ begin
                 i_energy_level_max        => i_Energy_level_max,
                 -- out spectrum to fifo pipe out
                 o_pipe_out_spectrum_din   => pipe_out_spectrum_din(N),
-                o_pipe_out_spectrum_wr_en => pipe_out_spectrum_wr_en(N)
+                o_pipe_out_spectrum_wr_en => pipe_out_spectrum_wr_en(N),
+                o_spectrum_count_pulse    => spectrum_pulse_by_filter(N)
             );
     end generate generate_label_spectrum_FSM;
 
     o_pipe_out_spectrum_din   <= pipe_out_spectrum_din(0) when clk_synchro_spectrum = '0' else pipe_out_spectrum_din(1);
     o_pipe_out_spectrum_wr_en <= pipe_out_spectrum_wr_en(0) when clk_synchro_spectrum = '0' else pipe_out_spectrum_wr_en(1);
+
+    ------------------------------------------
+    -- Cycle spectrum_pulse
+    ------------------------------------------
+
+    label_Cycle_spectrum_pulse : process(i_clk_slow, i_reset) is
+    begin
+        if i_reset = '1' then
+        o_spectrum_count_pulse <= (others => '0');
+        elsif rising_edge(i_clk_slow) then
+        o_spectrum_count_pulse <= std_logic_vector(unsigned(spectrum_pulse_by_filter(0))+unsigned(spectrum_pulse_by_filter(1)));
+        end if;
+    end process;
 
     --    label_ila : entity work.ila_0
     --        port map(

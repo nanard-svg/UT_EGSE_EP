@@ -10,6 +10,7 @@ entity spectrum_FSM is
         -- synchro_spectrum
         i_clk_synchro_spectrum    : in  std_logic;
         i_set_synchro_spectrum    : in  std_logic_vector(0 downto 0);
+        i_enable_erase            : in  std_logic;
         -- RAM
         o_we                      : out std_logic;
         o_en                      : out std_logic;
@@ -21,17 +22,19 @@ entity spectrum_FSM is
         i_energy_level_max        : in  signed(15 downto 0);
         -- out spectrum to fifo pipe out
         o_pipe_out_spectrum_din   : out std_logic_vector(31 downto 0);
-        o_pipe_out_spectrum_wr_en : out std_logic
+        o_pipe_out_spectrum_wr_en : out std_logic;
+        o_spectrum_count_pulse    : out std_logic_vector(31 downto 0)
     );
 end entity spectrum_FSM;
 
 architecture RTL of spectrum_FSM is
 
-    type state_type is (init_ram, fix_out_ram, detect_energy_max_ready, read_ram, write_ram, first_data_to_gse, write_to_gse, last_data_to_gse, end_write_to_gse);
+    type state_type is (init_ram, detect_energy_max_ready, read_ram, write_ram, first_data_to_gse, write_to_gse, last_data_to_gse, end_write_to_gse);
     signal state    : state_type;
     signal addr     : unsigned(9 downto 0);
     signal old_addr : unsigned(9 downto 0);
     signal trig     : std_logic;
+    signal spectrum_count_pulse : std_logic_vector(31 downto 0);
 
 begin
 
@@ -48,6 +51,7 @@ begin
             o_pipe_out_spectrum_din   <= (others => '0');
             trig                      <= '0';
             o_pipe_out_spectrum_wr_en <= '0';
+            spectrum_count_pulse      <= (others => '0');
 
         --stamp <= (others => '0');
 
@@ -85,9 +89,10 @@ begin
 
                     else
                         if i_ready_energy_level_max = '1' then
-                            addr  <= unsigned(i_energy_level_max(15 downto 6));
-                            o_en  <= '1';
-                            state <= read_ram;
+                            spectrum_count_pulse <= std_logic_vector(unsigned(spectrum_count_pulse) + 1);
+                            addr                 <= unsigned(i_energy_level_max(15 downto 6));
+                            o_en                 <= '1';
+                            state                <= read_ram;
                         end if;
                     end if;
 
@@ -104,13 +109,6 @@ begin
                     o_we  <= '1';
                     --o_di  <= std_logic_vector(unsigned(i_do) + to_unsigned(1, 16));
                     o_di  <= std_logic_vector(unsigned(i_do) + 1);
-                    state <= fix_out_ram;
-
-                when fix_out_ram =>
-
-                    addr  <= To_unsigned(0, 10);
-                    o_we  <= '0';
-                    o_en  <= '1';
                     state <= detect_energy_max_ready;
 
                 when first_data_to_gse =>
@@ -139,13 +137,20 @@ begin
                 when end_write_to_gse =>
                     o_pipe_out_spectrum_wr_en <= '0';
                     if i_clk_synchro_spectrum = not (i_set_synchro_spectrum(0)) then
-                        state <= detect_energy_max_ready;
+                        if i_enable_erase = '1' then
+                            state <= init_ram;
+                            addr  <= (others => '1');
+                        else
+                            state <= detect_energy_max_ready;
+                        end if;
+
                     end if;
 
             end case;
         end if;
     end process;
 
-    o_addr <= std_logic_vector(addr);
+    o_addr                 <= std_logic_vector(addr);
+    o_spectrum_count_pulse <= spectrum_count_pulse;
 
 end architecture RTL;

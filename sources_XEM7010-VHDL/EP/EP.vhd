@@ -13,6 +13,7 @@ entity EP is
         --input param
         i_TH_rise                 : in  std_logic_vector(31 downto 0);
         i_TH_fall                 : in  std_logic_vector(31 downto 0);
+        i_enable_erase            : in  std_logic;
         -- input
         i_ready_CDC               : in  std_logic;
         i_data_CDC                : in  signed(15 downto 0);
@@ -25,7 +26,8 @@ entity EP is
         o_data_before_filter      : out signed(15 downto 0);
         -- out spectrum to fifo pipe out
         o_pipe_out_spectrum_din   : out std_logic_vector(31 downto 0);
-        o_pipe_out_spectrum_wr_en : out std_logic
+        o_pipe_out_spectrum_wr_en : out std_logic;
+        o_spectrum_count_pulse    : out std_logic_vector(31 downto 0)
     );
 end entity EP;
 
@@ -104,11 +106,13 @@ begin
             i_clk_slow                => i_clk_slow,
             i_reset                   => i_reset,
             -- input from detect Energy level
+            i_enable_erase            => i_enable_erase,
             i_Energy_level_max        => Energy_level_max,
             i_readyEnergy_level_max   => readyEnergy_level_max,
             -- out spectrum to fifo pipe out
             o_pipe_out_spectrum_din   => o_pipe_out_spectrum_din,
-            o_pipe_out_spectrum_wr_en => o_pipe_out_spectrum_wr_en
+            o_pipe_out_spectrum_wr_en => o_pipe_out_spectrum_wr_en,
+            o_spectrum_count_pulse    => o_spectrum_count_pulse
         );
 
 end architecture RTL;

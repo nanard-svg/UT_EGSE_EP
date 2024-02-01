@@ -157,14 +157,14 @@ des.setwire()
 
 print ("set trigger_TH_rise")
 #level_trig=0xFFFF8EB8
-TH_rise=200
+TH_rise=1600
 TH_rise=int(np.uint32(TH_rise))
 print(TH_rise)
 des.setwire_TH_rise()
 
 print ("set trigger_TH_fall")
 #level_trig=0xFFFF8EB8
-TH_fall=200
+TH_fall=1000
 TH_fall=int(np.uint32(TH_fall))
 print(TH_fall)
 des.setwire_TH_fall()
@@ -176,7 +176,7 @@ des.start_capture()
 
 #print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 
-for x in range(100):
+for x in range(10000000):
     for c in range(10):
 
         print("############## read pointer spectrum #####################")
@@ -188,6 +188,14 @@ for x in range(100):
             #print("############################################")
             des.getwire(adress_wire_out_science)
         print("read pointer spectrum : {}".format(get))
+
+        print("############## read counter pulse #####################")
+        adress_wire_out_science = 0x22
+        des.getwire(adress_wire_out_science)
+
+        print("############################################")
+        print("read counter pulse  {}".format(get))
+        print("############################################")
 
         for i in range(2): # array_pipe_out tab 512 then 2*512 = 1024
 

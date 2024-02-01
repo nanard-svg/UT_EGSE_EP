@@ -5,17 +5,17 @@ use ieee.numeric_std.all;
 entity FSM_raw_data is
     port(
         --global
-        i_clk_slow      : in  std_logic;
-        i_reset         : in  std_logic;
+        i_clk_slow                     : in  std_logic;
+        i_reset                        : in  std_logic;
         --input
-        i_level_trigger : in  std_logic;
-        i_Start_Capture : in  std_logic;
-        i_data          : in  signed(31 downto 0);
-        i_ready         : in  std_logic;
+        i_level_trigger                : in  std_logic;
+        i_Start_Capture                : in  std_logic;
+        i_din_fifo_raw_data            : in  signed(31 downto 0);
+        i_ready                        : in  std_logic;
         --output
-        o_data          : out signed(31 downto 0);
-        o_write_data    : out std_logic;
-        i_empty         : in  std_logic
+        o_din_fifo_pipe_out_raw_data   : out signed(31 downto 0);
+        o_wr_en_fifo_pipe_out_raw_data : out std_logic;
+        i_empty_fifo_pipe_out_raw_data : in  std_logic
     );
 end entity FSM_raw_data;
 
@@ -41,7 +41,7 @@ begin
         port map(
             clk   => i_clk_slow,
             srst  => i_reset,
-            din   => std_logic_vector(i_data),
+            din   => std_logic_vector(i_din_fifo_raw_data),
             wr_en => i_ready,
             rd_en => rd_en,
             dout  => dout,
@@ -49,7 +49,7 @@ begin
             empty => open
         );
 
-    o_data <= signed(dout);
+    o_din_fifo_pipe_out_raw_data <= signed(dout);
 
     ------------------------------------------------------------------------------------------------
     -- Initial raw buffer filling
@@ -79,16 +79,16 @@ begin
     Raw_Capture_FSM : process(i_clk_slow, i_reset) is
     begin
         if i_reset = '1' then
-            state            <= IDLE;
-            Raw_Sample_Count <= (others => '0');
-            Delay_Count      <= (others => '0');
-            o_write_data     <= '0';
+            state                          <= IDLE;
+            Raw_Sample_Count               <= (others => '0');
+            Delay_Count                    <= (others => '0');
+            o_wr_en_fifo_pipe_out_raw_data <= '0';
 
         elsif rising_edge(i_clk_slow) then
             case state is
                 when IDLE =>
 
-                    o_write_data <= '0';
+                    o_wr_en_fifo_pipe_out_raw_data <= '0';
 
                     if i_Start_Capture = '1' then -- from trig in?
                         state <= WAIT_EVENT;
@@ -96,9 +96,9 @@ begin
 
                 when WAIT_EVENT =>
 
-                    o_write_data <= '0';
+                    o_wr_en_fifo_pipe_out_raw_data <= '0';
 
-                    if i_level_trigger = '1' and i_empty = '1' then -- level trigger & AND from trig in?
+                    if i_level_trigger = '1' and i_empty_fifo_pipe_out_raw_data = '1' then -- level trigger & AND from trig in?
                         Raw_Sample_Count <= (others => '0');
                         Delay_Count      <= (others => '0');
                         state            <= DELAY;
@@ -115,11 +115,11 @@ begin
 
                 when CAPTURE =>
 
-                    o_write_data <= '0';
+                    o_wr_en_fifo_pipe_out_raw_data <= '0';
 
                     if i_ready = '1' then
-                        o_write_data     <= '1';
-                        Raw_Sample_Count <= Raw_Sample_Count + 1;
+                        o_wr_en_fifo_pipe_out_raw_data <= '1';
+                        Raw_Sample_Count               <= Raw_Sample_Count + 1;
 
                         if (To_integer(Raw_Sample_Count) = 1024 - 1) then
                             state <= IDLE;
