@@ -29,11 +29,12 @@ end entity spectrum_FSM;
 
 architecture RTL of spectrum_FSM is
 
-    type state_type is (init_ram, detect_energy_max_ready, read_ram, write_ram, first_data_to_gse, write_to_gse, last_data_to_gse, end_write_to_gse);
-    signal state    : state_type;
-    signal addr     : unsigned(9 downto 0);
-    signal old_addr : unsigned(9 downto 0);
-    signal trig     : std_logic;
+    type state_type is (init_ram, detect_energy_max_ready, read_ram, write_ram, header_to_gse, first_data_to_gse, write_to_gse, last_data_to_gse, end_write_to_gse, dispatch);
+    signal TM_Byte_index        : integer range 0 to 8;
+    signal state                : state_type;
+    signal addr                 : unsigned(9 downto 0);
+    signal old_addr             : unsigned(9 downto 0);
+    signal trig                 : std_logic;
     signal spectrum_count_pulse : std_logic_vector(31 downto 0);
 
 begin
@@ -52,6 +53,7 @@ begin
             trig                      <= '0';
             o_pipe_out_spectrum_wr_en <= '0';
             spectrum_count_pulse      <= (others => '0');
+            TM_Byte_index             <= 0;
 
         --stamp <= (others => '0');
 
@@ -81,11 +83,12 @@ begin
                     o_we <= '0';
 
                     if i_clk_synchro_spectrum = i_set_synchro_spectrum(0) then
-                        state    <= first_data_to_gse;
-                        addr     <= (others => '0');
-                        old_addr <= (others => '0');
-                        o_en     <= '1';
-                        o_we     <= '0';
+                        state         <= header_to_gse;
+                        TM_Byte_index <= 0;
+                        addr          <= (others => '0');
+                        old_addr      <= (others => '0');
+                        o_en          <= '0';
+                        o_we          <= '0';
 
                     else
                         if i_ready_energy_level_max = '1' then
@@ -111,6 +114,35 @@ begin
                     o_di  <= std_logic_vector(unsigned(i_do) + 1);
                     state <= detect_energy_max_ready;
 
+                when header_to_gse =>
+
+                    TM_Byte_index <= TM_Byte_index + 1;
+
+                    case TM_Byte_index is
+
+                        when 0 =>       -- write ID
+                            o_pipe_out_spectrum_wr_en <= '1';
+                            o_pipe_out_spectrum_din   <= x"0000000" & "000" & i_set_synchro_spectrum;
+                        --------------------------------------------------------
+                        when 1 =>       -- write TimeMSB
+                            o_pipe_out_spectrum_din <= x"AAAAAAAA";
+                        --------------------------------------------------------
+                        when 2 =>       -- write T
+                            o_pipe_out_spectrum_din <= x"00000000";
+                        --------------------------------------------------------
+                        when 3 =>       -- write TimeLSB
+                            o_pipe_out_spectrum_din <= x"55555555";
+                        --------------------------------------------------------
+                        when 4 to 5 =>
+                            state                     <= first_data_to_gse;
+                            o_pipe_out_spectrum_wr_en <= '0';
+                            o_en                      <= '1';
+                            TM_Byte_index             <= 0;
+                        --------------------------------------------------------
+                        when others =>
+
+                    end case;
+
                 when first_data_to_gse =>
 
                     addr     <= addr + 1;
@@ -135,7 +167,33 @@ begin
                     state                   <= end_write_to_gse;
 
                 when end_write_to_gse =>
+
                     o_pipe_out_spectrum_wr_en <= '0';
+                    state                     <= dispatch;
+
+--                when end_to_gse =>
+--
+--                    TM_Byte_index <= TM_Byte_index + 1;
+--
+--                    case TM_Byte_index is
+--
+--                        when 0 =>       -- 
+--                            o_pipe_out_spectrum_wr_en <= '1';
+--                            o_pipe_out_spectrum_din   <= x"00000000";
+--                        --------------------------------------------------------
+--                        when 1 =>
+--                            o_pipe_out_spectrum_din <= x"00000000";
+--                            TM_Byte_index           <= 0;
+--                            state                   <= dispatch;
+--                        --------------------------------------------------------
+--                        when others =>
+--
+--                    end case;
+
+                when dispatch =>
+                    
+                    o_pipe_out_spectrum_wr_en <= '0';
+
                     if i_clk_synchro_spectrum = not (i_set_synchro_spectrum(0)) then
                         if i_enable_erase = '1' then
                             state <= init_ram;

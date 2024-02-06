@@ -25,7 +25,7 @@ list_array_pipe_out_LSB = []
 #list_pipe_in_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ,14 ,15 ,16 ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,0,-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13 ,-14 ,-15 ,-16 ,-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,0])
 
 
-array_pipe_out = np.ones(512).astype(int)
+array_pipe_out = np.ones(1028).astype(int)
 
 #################################################
 #list_pipe_in = np.array(ma_liste)
@@ -112,7 +112,8 @@ class DESTester:
         self.xem.ReadFromPipeOut(adresse_pipe_out_read,array_pipe_out)
         return(array_pipe_out)
 
-
+def tohex(val, nbits):
+  return hex((val + (1 << nbits)) % (1 << nbits))
 
 
 #################################### Main code ######################################
@@ -157,7 +158,7 @@ des.setwire()
 
 print ("set trigger_TH_rise")
 #level_trig=0xFFFF8EB8
-TH_rise=1600
+TH_rise=1000
 TH_rise=int(np.uint32(TH_rise))
 print(TH_rise)
 des.setwire_TH_rise()
@@ -182,7 +183,7 @@ for x in range(10000000):
         print("############## read pointer spectrum #####################")
         adress_wire_out_science = 0x21
         des.getwire(adress_wire_out_science)
-        while (get != 1024):
+        while (get != 1028):
             #print("############################################")
             #print("read pointer spectrum  {}".format(get))
             #print("############################################")
@@ -197,24 +198,31 @@ for x in range(10000000):
         print("read counter pulse  {}".format(get))
         print("############################################")
 
-        for i in range(2): # array_pipe_out tab 512 then 2*512 = 1024
 
-            #print("################################ READ FIFO  Pipe spectrum #############################################")
-            adresse_pipe_out_read=0xA2
-            des.getpipeout(adresse_pipe_out_read)
-            #print(array_pipe_out.itemsize)
-            #print("print array_pipe_out  {}".format(array_pipe_out))
-            list_array_pipe_out = list(array_pipe_out)
 
-            ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
+        #print("################################ READ FIFO  Pipe spectrum #############################################")
+        adresse_pipe_out_read=0xA2
+        des.getpipeout(adresse_pipe_out_read)
+        #print(array_pipe_out.itemsize)
+        #print("print array_pipe_out  {}".format(array_pipe_out))
+        list_array_pipe_out = list(array_pipe_out)
 
-            for elm in list_array_pipe_out :
-                #list_array_pipe_out_MSB.append(int(elm/2**16))
-                list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
-                #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
-                list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
-                #print("energy : {}".format(np.short(elm & 0xFFFF)))
-                if (np.short(elm & 0xFFFF)) != 0 :
-                    print("spectrum",hex(elm))
+        # print("################################ READ header spectrum #############################################")
+        print("index ram spectrum : {}".format(tohex(list_array_pipe_out[0], 32)))
+        print("TIME MSB : {}".format(tohex(list_array_pipe_out[1], 32)))
+        print("TIME  : {}".format(tohex(list_array_pipe_out[2], 32)))
+        print("TIME LSB  : {}".format(tohex(list_array_pipe_out[3], 32)))
+
+
+        ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
+
+        for elm in list_array_pipe_out[4:] :
+            #list_array_pipe_out_MSB.append(int(elm/2**16))
+            list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+            #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
+            list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+            #print("energy : {}".format(np.short(elm & 0xFFFF)))
+            if (np.short(elm & 0xFFFF)) != 0 :
+                print("spectrum",tohex(elm,32))
 
 print("script done")
