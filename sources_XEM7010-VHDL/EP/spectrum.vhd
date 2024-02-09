@@ -32,7 +32,6 @@ architecture RTL of spectrum is
     signal count                : unsigned(26 downto 0);
     signal clk_synchro_spectrum : std_logic;
     --signal stamp : unsigned(15 downto 0);
-    signal probe0               : STD_LOGIC_VECTOR(44 DOWNTO 0);
 
     -- out spectrum to fifo pipe out
     type Array_din_type is array (1 downto 0) of std_logic_vector(31 downto 0);

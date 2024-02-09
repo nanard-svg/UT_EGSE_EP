@@ -45,14 +45,11 @@ architecture simulate of SIM_TEST is
         );
     end component;
 
-    signal led : std_logic_vector(7 downto 0);
-
     -- FrontPanel Host --------------------------------------------------------------------------
 
     signal okUH  : std_logic_vector(4 downto 0) := b"00000";
     signal okHU  : std_logic_vector(2 downto 0);
     signal okUHU : std_logic_vector(31 downto 0);
-    signal okAA  : std_logic;
 
     ---------------------------------------------------------------------------------------------
 
@@ -71,19 +68,18 @@ architecture simulate of SIM_TEST is
     signal sys_clkn : std_logic;
 
     -- Clocks
-    signal sys_clk : std_logic := '0';
 
     type PIPEIN_ARRAY is array (0 to 16380) of std_logic_vector(7 downto 0);
     signal pipeIn_signal    : PIPEIN_ARRAY;
     signal pipeInSize_count : integer;
     signal Reset            : std_logic;
 
-    signal WireOutValue            : std_logic_vector(31 downto 0);
     signal pipeIn_signal_config    : PIPEIN_ARRAY;
     signal pipeInSize_count_config : integer;
     signal sck                     : STD_LOGIC;
     signal cnv                     : STD_LOGIC;
     signal sdo                     : STD_LOGIC;
+    signal sys_clk                 : std_logic;
 
     ---------------------------------------------------------------------------------------------
 
@@ -987,7 +983,7 @@ begin
         -- apply all
         SetWireInValue(x"01", x"0000_8000", NO_MASK); -- set trig
         UpdateWireIns;
-        
+
         wait for 10 us;
         -- apply all
         SetWireInValue(x"02", x"0000_0100", NO_MASK); -- set TH_rise
@@ -997,7 +993,6 @@ begin
         -- apply all
         SetWireInValue(x"03", x"0000_0100", NO_MASK); -- set TH_fall
         UpdateWireIns;
-
 
         SetWireInValue(x"00", x"0000_0002", NO_MASK); -- start capture and unReset all design 
         UpdateWireIns;

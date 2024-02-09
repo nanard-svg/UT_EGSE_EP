@@ -186,7 +186,7 @@ des.start_capture()
 
 
 
-for x in range(10000000):
+for x in range(100000000):
     for c in range(10):
 
         print("############## read pointer spectrum #####################")

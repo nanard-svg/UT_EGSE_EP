@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-file_name = 'FIR_100keV.txt'
+file_name = 'FIR_20keV.txt'
 file_name_out = '0.txt'
 
 formated_lines_FIR = []

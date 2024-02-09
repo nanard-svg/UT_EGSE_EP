@@ -34,7 +34,6 @@ architecture RTL of spectrum_FSM is
     signal state                : state_type;
     signal addr                 : unsigned(9 downto 0);
     signal old_addr             : unsigned(9 downto 0);
-    signal trig                 : std_logic;
     signal spectrum_count_pulse : std_logic_vector(31 downto 0);
 
 begin
@@ -50,7 +49,6 @@ begin
             old_addr                  <= (others => '0');
             o_di                      <= (others => '0');
             o_pipe_out_spectrum_din   <= (others => '0');
-            trig                      <= '0';
             o_pipe_out_spectrum_wr_en <= '0';
             spectrum_count_pulse      <= (others => '0');
             TM_Byte_index             <= 0;
