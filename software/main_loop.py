@@ -14,8 +14,6 @@ indice=0
 lignes = []
 list_array_pipe_out_MSB = []
 list_array_pipe_out_LSB = []
-list_array_pipe_out_MSB_0 = []
-list_array_pipe_out_LSB_0 = []
 
 
 
@@ -136,7 +134,7 @@ print ("unRESET")
 des.unResetDES()
 
 #################################  LOAD COEF  ###################################################
-print ("Coef filter 0")
+print ("Coef")
 file = open('coef_V2.txt', "r")
 lines_coef = file.readlines()
 formated_lines_coef = []
@@ -147,10 +145,10 @@ for elm in lines_coef :
 #print("la liste coef est \n {}".format(formated_lines_coef))
 list_pipe_in_array = np.array(formated_lines_coef)
 #print("le tableau coef est \n {}".format(list_pipe_in_array))
-adresse=0x81 # filter0
+adresse=0x81  # filter0
 des.setpipein(list_pipe_in_array,adresse)
 
-print ("Coef filter 1")
+print ("Coef")
 file = open('coef_V2_1.txt', "r")
 lines_coef_1 = file.readlines()
 formated_lines_coef_1 = []
@@ -210,78 +208,84 @@ for file_name in file_names:
 
     for c in range(10):
 
-        print("############## read pointer spectrum from filter 0 #####################")
-        adress_wire_out_science = 0x21
+        print("############## read pointer spectrum filter 0 #####################")
+        adress_wire_out_science = 0x21 #filter 0
+        #adress_wire_out_science = 0x24 #filter1
         des.getwire(adress_wire_out_science)
         while (get != 1028):
             #print("############################################")
             #print("read pointer spectrum  {}".format(get))
             #print("############################################")
             des.getwire(adress_wire_out_science)
-        print("read pointer spectrum filter 0 0x21 : {}".format(get))
+        print("read pointer spectrum filter 0 : {}".format(get))
 
-
-
-        print("################################ READ FIFO  Pipe spectrum from filter 0 #############################################")
-        adresse_pipe_out_read=0xA2
-        des.getpipeout(adresse_pipe_out_read)
-        #print(array_pipe_out.itemsize)
-        #print("print array_pipe_out  {}".format(array_pipe_out))
-        list_array_pipe_out_0 = list(array_pipe_out)
-
-        print("################################ READ header spectrum from filter 0 #############################################")
-        print("index ram spectrum : {}".format(tohex(list_array_pipe_out_0[0],32)))
-        print(type(list_array_pipe_out_0[0]))
-        print("TIME MSB : {}".format(tohex(list_array_pipe_out_0[1],32)))
-        print("TIME  : {}".format(tohex(list_array_pipe_out_0[2],32)))
-        print("TIME LSB  : {}".format(tohex(list_array_pipe_out_0[3],32)))
-
-
-        print("############## read pointer spectrum from filter 1 #####################")
-        adress_wire_out_science = 0x24
+        print("############## read pointer spectrum filter 1 #####################")
+        #adress_wire_out_science = 0x21 #filter 0
+        adress_wire_out_science = 0x24 #filter1
         des.getwire(adress_wire_out_science)
         while (get != 1028):
             #print("############################################")
             #print("read pointer spectrum  {}".format(get))
             #print("############################################")
             des.getwire(adress_wire_out_science)
-        print("read pointer spectrum filter 0 0x24 : {}".format(get))
+        print("read pointer spectrum filter 1 : {}".format(get))
 
-        print("################################ READ FIFO  Pipe spectrum from filter 1 #############################################")
-        adresse_pipe_out_read = 0xA4
+
+
+
+        print("################################ READ FIFO  Pipe spectrum filter 0 #############################################")
+        adresse_pipe_out_read=0xA2         #filter0
+        #adresse_pipe_out_read = 0xA4        #filter1
         des.getpipeout(adresse_pipe_out_read)
         #print(array_pipe_out.itemsize)
         #print("print array_pipe_out  {}".format(array_pipe_out))
         list_array_pipe_out = list(array_pipe_out)
 
-        print("################################ READ header spectrum from filter 1 #############################################")
-        print("index ram spectrum : {}".format(tohex(list_array_pipe_out[0],32)))
+        print("################################ HEADER spectrum filter 0 #############################################")
+        print("Number Filter and Index Ram Spectrum : {}".format(tohex(list_array_pipe_out[0],32)))
         print(type(list_array_pipe_out[0]))
         print("TIME MSB : {}".format(tohex(list_array_pipe_out[1],32)))
         print("TIME  : {}".format(tohex(list_array_pipe_out[2],32)))
         print("TIME LSB  : {}".format(tohex(list_array_pipe_out[3],32)))
 
-
-
-        ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
-
+        print("################################ DATA of  spectrum filter 0 #############################################")
         for elm in list_array_pipe_out[4:] :
             #print(type(elm))
             #list_array_pipe_out_MSB.append(int(elm/2**16))
             list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
             #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
             list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
-            #print("energy : {}".format(np.short(elm & 0xFFFF)))
+                #print("energy : {}".format(np.short(elm & 0xFFFF)))
             if (np.short(elm & 0xFFFF)) != 0 :
-                print("spectrum filter 1", tohex(elm,32))
+                print("spectrum",tohex(elm,32))
 
-        for elm in list_array_pipe_out_0[4:] :
-            # list_array_pipe_out_MSB.append(int(elm/2**16))
-            list_array_pipe_out_MSB_0.append(np.short((elm & 0xFFFF0000) / 2 ** 16))
-            # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
-            list_array_pipe_out_LSB_0.append(np.short(elm & 0xFFFF))
+        print("################################ READ FIFO  Pipe spectrum filter 1 #############################################")
+        #adresse_pipe_out_read=0xA2         #filter0
+        adresse_pipe_out_read = 0xA4        #filter1
+        des.getpipeout(adresse_pipe_out_read)
+        #print(array_pipe_out.itemsize)
+        #print("print array_pipe_out  {}".format(array_pipe_out))
+        list_array_pipe_out_1 = list(array_pipe_out)
+
+        print("################################ HEADER spectrum filter 1 #############################################")
+        print("Number Filter and Index Ram Spectrum : {}".format(tohex(list_array_pipe_out_1[0],32)))
+        print(type(list_array_pipe_out_1[0]))
+        print("TIME MSB : {}".format(tohex(list_array_pipe_out_1[1],32)))
+        print("TIME  : {}".format(tohex(list_array_pipe_out_1[2],32)))
+        print("TIME LSB  : {}".format(tohex(list_array_pipe_out_1[3],32)))
+
+        ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
+
+        print("################################ DATA of  spectrum filter 1 #############################################")
+        for elm in list_array_pipe_out_1[4:] :
+            #print(type(elm))
+            #list_array_pipe_out_MSB.append(int(elm/2**16))
+            list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+            #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
+            list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
+                #print("energy : {}".format(np.short(elm & 0xFFFF)))
             if (np.short(elm & 0xFFFF)) != 0 :
-                print("spectrum filter 0", tohex(elm,32))
+                print("spectrum",tohex(elm,32))
 
         #################################### write formated_lines to pipe in INJECTION ##########################################
 

@@ -125,7 +125,7 @@ architecture arch of UT_EGSE is
 
     signal empty_fifo_pipe_out_raw_data : STD_LOGIC_VECTOR(1 downto 0);
     signal din_fifo_raw_data            : Array_config_32signedx2_type;
-    signal injection_started : std_logic;
+    signal injection_started            : std_logic;
 
     --signal ep23wire : std_logic_vector(31 downto 0);
     --signal ep24wire : std_logic_vector(31 downto 0);
@@ -326,6 +326,7 @@ begin
                 i_clk_slow                => sys_clk,
                 i_clk_fast                => clk_60Mhz,
                 i_reset                   => reset,
+                i_filter_number           => std_logic_vector(To_unsigned(N, 1)),
                 -- input param trigger pick detect energy
                 i_TH_rise                 => TH_rise,
                 i_TH_fall                 => TH_fall,
