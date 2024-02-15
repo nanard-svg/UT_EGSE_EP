@@ -126,6 +126,6 @@ set_property -dict {PACKAGE_PIN V9 IOSTANDARD LVCMOS33 DRIVE 8 SLEW SLOW} [get_p
 #J1-24 
 set_property PACKAGE_PIN V8 [get_ports {sdi}] 
 set_property IOSTANDARD LVCMOS33 [get_ports {sdi}]
-#set_property PULLUP {TRUE} [get_ports sdi]
+set_property PULLUP {TRUE} [get_ports sdi]
 #J1-22
 set_property -dict {PACKAGE_PIN W7 IOSTANDARD LVCMOS33 DRIVE 8 SLEW SLOW} [get_ports {sdo}]

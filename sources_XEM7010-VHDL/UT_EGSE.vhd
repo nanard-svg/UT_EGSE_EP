@@ -125,6 +125,7 @@ architecture arch of UT_EGSE is
 
     signal empty_fifo_pipe_out_raw_data : STD_LOGIC_VECTOR(1 downto 0);
     signal din_fifo_raw_data            : Array_config_32signedx2_type;
+    signal injection_started : std_logic;
 
     --signal ep23wire : std_logic_vector(31 downto 0);
     --signal ep24wire : std_logic_vector(31 downto 0);
@@ -259,16 +260,17 @@ begin
     label_Injection : entity work.Injection
         port map(
             --global
-            reset           => reset,
-            clk_60Mhz       => clk_60Mhz,
+            reset               => reset,
+            clk_60Mhz           => clk_60Mhz,
             --from pipe in Injection
-            o_pipe_in_rd_en => pipe_in_injection_rd_en_fifo,
-            i_pipe_in_empty => pipe_in_injection_empty_fifo,
-            i_pipe_in_valid => pipe_in_injection_valid_fifo,
-            i_pipe_in_dout  => signed(pipe_in_injection_dout_fifo(15 downto 0)),
+            o_pipe_in_rd_en     => pipe_in_injection_rd_en_fifo,
+            i_pipe_in_empty     => pipe_in_injection_empty_fifo,
+            i_pipe_in_valid     => pipe_in_injection_valid_fifo,
+            i_pipe_in_dout      => signed(pipe_in_injection_dout_fifo(15 downto 0)),
             --output injection
-            o_data          => data_fast_injection,
-            o_ready         => ready_fast_injection
+            o_injection_started => injection_started,
+            o_data              => data_fast_injection,
+            o_ready             => ready_fast_injection
         );
 
     ------------------------------------------
@@ -397,7 +399,7 @@ begin
             if reset = '1' then
                 i_level_trigger(N) <= '0';
             elsif rising_edge(sys_clk) then
-                if signed(ep01wire(15 downto 0)) < data_before_filter(N) then
+                if (signed(ep01wire(15 downto 0)) < data_before_filter(N) and injection_started = '1' and ep00wire(31) = '0') or (signed(ep01wire(15 downto 0)) < data_before_filter(N) and ep00wire(31) = '1') then
                     i_level_trigger(N) <= '1';
                 else
                     i_level_trigger(N) <= '0';

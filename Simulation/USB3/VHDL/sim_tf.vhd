@@ -24,10 +24,10 @@ use std.textio.all;
 use work.mappings.all;
 use work.parameters.all;
 
-entity SIM_TEST is
-end SIM_TEST;
+entity sim_tf is
+end sim_tf;
 
-architecture simulate of SIM_TEST is
+architecture simulate of sim_tf is
 
     component UT_EGSE is
         port(

@@ -34,9 +34,9 @@ result = [a - b for a, b in zip(formated_lines_FIR, formated_lines_out)]
 print(result)
 
 
-plt.plot(formated_lines_FIR)
-plt.plot(formated_lines_out)
-#plt.plot(result)
+#plt.plot(formated_lines_FIR)
+#plt.plot(formated_lines_out)
+plt.plot(result[35:])
 plt.show()
 
 

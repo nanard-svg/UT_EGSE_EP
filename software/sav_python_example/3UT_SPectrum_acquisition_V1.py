@@ -1,8 +1,8 @@
 import ok
 import time
-import array as arr
+# import array as arr
 
-import math
+# import math
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -14,11 +14,10 @@ indice=0
 lignes = []
 list_array_pipe_out_MSB = []
 list_array_pipe_out_LSB = []
-list_array_pipe_out_MSB_0 = []
-list_array_pipe_out_LSB_0 = []
 
 
 
+file_names = ['Signal_ADC_20keV.txt']
 
 #list_pipe_in_array = np.ones(2048).astype(int)
 
@@ -26,12 +25,23 @@ list_array_pipe_out_LSB_0 = []
 #list_pipe_in_array = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ,14 ,15 ,16 ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,0,-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13 ,-14 ,-15 ,-16 ,-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,0])
 
 
-array_pipe_out = np.ones(1028).astype(int)
+array_pipe_out = np.ones(512).astype(int)
 
 #################################################
 #list_pipe_in = np.array(ma_liste)
 #ma_list = list(mon_tab)
 ###############################################
+
+# Configuration du spectre
+plt.close('all')
+
+plt.ion() # Ajout GO
+fig_spectre = plt.figure("Spectre 3UTransat") # Ajout GO
+# ax=plt.subplot() # Ajout GO
+plt.xlabel("Raw data") # Ajout GO
+plt.ylabel("Count number") # Ajout GO
+plt.title("Spectre 3UTransat") # Ajout GO
+plt.show()
 
 #################################### CLASS ######################################
 
@@ -74,16 +84,19 @@ class DESTester:
         print ("FrontPanel support is available.")
         return(True)
 
+    def Close (self) :
+        self.xem = ok.FrontPanel().Close()
+
     def ResetDES(self):
-        self.xem.SetWireInValue(0x00, 0x80000001)
+        self.xem.SetWireInValue(0x00, 0x00000001)
         self.xem.UpdateWireIns()
 
     def unResetDES(self):
-        self.xem.SetWireInValue(0x00, 0x80000000)
+        self.xem.SetWireInValue(0x00, 0x00000000)
         self.xem.UpdateWireIns()
 
     def start_capture(self):
-        self.xem.SetWireInValue(0x00, 0x80000002)
+        self.xem.SetWireInValue(0x00, 0x00000002)
         self.xem.UpdateWireIns()
 
     def setwire(self):
@@ -113,8 +126,7 @@ class DESTester:
         self.xem.ReadFromPipeOut(adresse_pipe_out_read,array_pipe_out)
         return(array_pipe_out)
 
-def tohex(val, nbits):
-  return hex((val + (1 << nbits)) % (1 << nbits))
+
 
 
 #################################### Main code ######################################
@@ -122,7 +134,7 @@ def tohex(val, nbits):
 print ("------ DES Encrypt/Decrypt Tester in Python ------")
 des = DESTester()
 if (False == des.InitializeDevice()):
-    exit
+    print("exit")
 print ("------------------------------------------------------------")
 time.sleep(1)
 ################################## RESET #############################################
@@ -135,7 +147,7 @@ print ("unRESET")
 des.unResetDES()
 
 #################################  LOAD COEF  ###################################################
-print ("Coef filter 0")
+print ("Coef")
 file = open('coef_V2.txt', "r")
 lines_coef = file.readlines()
 formated_lines_coef = []
@@ -146,41 +158,27 @@ for elm in lines_coef :
 #print("la liste coef est \n {}".format(formated_lines_coef))
 list_pipe_in_array = np.array(formated_lines_coef)
 #print("le tableau coef est \n {}".format(list_pipe_in_array))
-adresse=0x81 # filter0
+adresse=0x81
 des.setpipein(list_pipe_in_array,adresse)
-
-print ("Coef filter 1")
-file = open('coef_V2_1.txt', "r")
-lines_coef_1 = file.readlines()
-formated_lines_coef_1 = []
-for elm in lines_coef_1 :
-    formated_lines_coef_1.append(int(elm[:-1]))##la liste lines a des eleementr ascii dont on supprime\n avec :-1
-    #formated_lines.append(elm[:-1])
-
-#print("la liste coef est \n {}".format(formated_lines_coef))
-list_pipe_in_array_1 = np.array(formated_lines_coef_1)
-#print("le tableau coef est \n {}".format(list_pipe_in_array))
-adresse=0x82 # filter1
-des.setpipein(list_pipe_in_array_1,adresse)
 
 ###################################  SET LEVEL TRIGG  ###############################################
 print ("set trigger_level")
 #level_trig=0xFFFF8EB8
-level_trig=5
+level_trig=20
 level_trig=int(np.uint32(level_trig))
 print(level_trig)
 des.setwire()
 
 print ("set trigger_TH_rise")
 #level_trig=0xFFFF8EB8
-TH_rise=1000
+TH_rise=10
 TH_rise=int(np.uint32(TH_rise))
 print(TH_rise)
 des.setwire_TH_rise()
 
 print ("set trigger_TH_fall")
 #level_trig=0xFFFF8EB8
-TH_fall=1000
+TH_fall=10
 TH_fall=int(np.uint32(TH_fall))
 print(TH_fall)
 des.setwire_TH_fall()
@@ -192,94 +190,85 @@ des.start_capture()
 
 #print("le nombre elements dans tableau est {}".format(len(list_pipe_in_array)))
 
-for x in range(10000000):
-    for c in range(10):
 
-        print("############## read pointer spectrum from filter 0 #####################")
-        adress_wire_out_science = 0x21
+for file_name in file_names:
+#################################### read file from list name ##########################################
+    file_name = open(file_name, "r")
+    lines = file_name.readlines()
+    formated_lines = []
+    for elm in lines:
+        formated_lines.append(int(elm[:-1]))
+    print("############################################")
+    print("file name fichier injecté {}".format(file_name))
+    #print("print formated lines {}".format(formated_lines)) #### print liste ONE file
+    print("min ", min(formated_lines))
+    print("max ", max(formated_lines))
+    print("max-min", max(formated_lines)-min(formated_lines))
+
+
+# Spectre_Add = np.linspace(0,1023,1024).astype(int) # Ajout GO
+# Spectre = np.zeros(1024).astype(int) # Ajout GO
+for c in range(160):
+
+    print("############## read pointer spectrum #####################")
+    adress_wire_out_science = 0x21
+    des.getwire(adress_wire_out_science)
+    while (get != 1024):
+        #print("############################################")
+        #print("read pointer spectrum  {}".format(get))
+        #print("############################################")
         des.getwire(adress_wire_out_science)
-        while (get != 1028):
-            #print("############################################")
-            #print("read pointer spectrum  {}".format(get))
-            #print("############################################")
-            des.getwire(adress_wire_out_science)
-        print("read pointer spectrum filter 0 0x21 : {}".format(get))
 
-        print("############## read counter pulse #####################")
-        adress_wire_out_science = 0x22
-        des.getwire(adress_wire_out_science)
+    print("################################ READ FIFO  Pipe spectrum #############################################")
+    print("read pointer spectrum  {}".format(get))
 
-        print("############################################")
-        print("read counter pulse filter 0 {}".format(get))
-        print("############################################")
+    Spectre_Add = np.linspace(0,1023,1024).astype(int)
+    Spectre = np.zeros(1024).astype(int) # Ajout GO
 
+    for i in range(4): # array_pipe_out tab 512 then 2*512 = 1024
 
-        print("################################ READ FIFO  Pipe spectrum from filter 0 #############################################")
+        # print("################################ READ FIFO  Pipe spectrum #############################################")
         adresse_pipe_out_read=0xA2
-        des.getpipeout(adresse_pipe_out_read)
-        #print(array_pipe_out.itemsize)
-        #print("print array_pipe_out  {}".format(array_pipe_out))
-        list_array_pipe_out_0 = list(array_pipe_out)
-
-        print("################################ READ header spectrum from filter 0 #############################################")
-        print("index ram spectrum : {}".format(tohex(list_array_pipe_out_0[0],32)))
-        print(type(list_array_pipe_out_0[0]))
-        print("TIME MSB : {}".format(tohex(list_array_pipe_out_0[1],32)))
-        print("TIME  : {}".format(tohex(list_array_pipe_out_0[2],32)))
-        print("TIME LSB  : {}".format(tohex(list_array_pipe_out_0[3],32)))
-
-
-        print("############## read pointer spectrum from filter 1 #####################")
-        adress_wire_out_science = 0x24
-        des.getwire(adress_wire_out_science)
-        while (get != 1028):
-            #print("############################################")
-            #print("read pointer spectrum  {}".format(get))
-            #print("############################################")
-            des.getwire(adress_wire_out_science)
-        print("read pointer spectrum filter 0 0x24 : {}".format(get))
-
-        print("############## read counter pulse #####################")
-        adress_wire_out_science = 0x25
-        des.getwire(adress_wire_out_science)
-
-        print("############################################")
-        print("read counter pulse filter 1  {}".format(get))
-        print("############################################")
-
-        print("################################ READ FIFO  Pipe spectrum from filter 1 #############################################")
-        adresse_pipe_out_read = 0xA4
         des.getpipeout(adresse_pipe_out_read)
         #print(array_pipe_out.itemsize)
         #print("print array_pipe_out  {}".format(array_pipe_out))
         list_array_pipe_out = list(array_pipe_out)
 
-        print("################################ READ header spectrum from filter 1 #############################################")
-        print("index ram spectrum : {}".format(tohex(list_array_pipe_out[0],32)))
-        print(type(list_array_pipe_out[0]))
-        print("TIME MSB : {}".format(tohex(list_array_pipe_out[1],32)))
-        print("TIME  : {}".format(tohex(list_array_pipe_out[2],32)))
-        print("TIME LSB  : {}".format(tohex(list_array_pipe_out[3],32)))
-
-
         ################### SPLITE 32 bit Science from Pipe out spectrum #######################################
 
-        for elm in list_array_pipe_out[4:] :
-            #print(type(elm))
+        for elm in list_array_pipe_out :
             #list_array_pipe_out_MSB.append(int(elm/2**16))
             list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
             #print("address : {}".format(np.short((elm & 0xFFFF0000) / 2 ** 16)))
             list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
             #print("energy : {}".format(np.short(elm & 0xFFFF)))
             if (np.short(elm & 0xFFFF)) != 0 :
-                print("spectrum filter 1", tohex(elm,32))
+                print("spectrum",hex(elm))
+            
+                # Construction du spectre
+                add = int((elm & 0xFFFF0000)/2**16) # Ajout GO
+                data = np.short(elm & 0xFFFF) # Ajout GO
+                Spectre[add] = Spectre[add] + data # Ajout GO
+                print("Add = {}".format(np.short((elm & 0xFFFF0000)/2**16)))
+                print("Data = {}".format(np.short(elm & 0xFFFF)))
+    
 
-        for elm in list_array_pipe_out_0[4:] :
-            # list_array_pipe_out_MSB.append(int(elm/2**16))
-            list_array_pipe_out_MSB_0.append(np.short((elm & 0xFFFF0000) / 2 ** 16))
-            # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
-            list_array_pipe_out_LSB_0.append(np.short(elm & 0xFFFF))
-            if (np.short(elm & 0xFFFF)) != 0 :
-                print("spectrum filter 0", tohex(elm,32))
+
+    #################################### write formated_lines to pipe in injection ##########################################
+    print("############## INJection #####################")
+    list_pipe_in_array = np.array(formated_lines)
+    # print("list_pipe_in_array{}".format(list_pipe_in_array))
+    adresse = 0x80
+    des.setpipein(list_pipe_in_array, adresse)
+    
+    # Plot du spectre
+    plt.plot(Spectre_Add, Spectre, "ob") # Ajout GO
+    plt.pause(0.0001) # Ajout GO
+    plt.show()
+
+# plt.plot(Spectre_Add, Spectre) # Ajout GO
+
+if (False == des.Close()):
+    print("exit")
 
 print("script done")
