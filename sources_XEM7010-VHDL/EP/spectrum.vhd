@@ -6,6 +6,7 @@ entity spectrum is
     port(
         i_clk_slow                : in  std_logic;
         i_reset                   : in  std_logic;
+        i_filter_number           : in  std_logic_vector(0 downto 0);
         -- input from detect Energy level
         i_enable_erase            : in  std_logic;
         i_Energy_level_max        : in  signed(15 downto 0);
@@ -88,6 +89,7 @@ begin
                 -- global
                 i_clk_slow                => i_clk_slow,
                 i_reset                   => i_reset,
+                i_filter_number           => i_filter_number, 
                 -- synchro_spectrum
                 i_clk_synchro_spectrum    => clk_synchro_spectrum,
                 i_set_synchro_spectrum    => std_logic_vector(To_unsigned(N, 1)),

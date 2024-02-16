@@ -24,10 +24,10 @@ use std.textio.all;
 use work.mappings.all;
 use work.parameters.all;
 
-entity SIM_TEST is
-end SIM_TEST;
+entity sim_tf is
+end sim_tf;
 
-architecture simulate of SIM_TEST is
+architecture simulate of sim_tf is
 
     component UT_EGSE is
         port(
@@ -74,12 +74,14 @@ architecture simulate of SIM_TEST is
     signal pipeInSize_count : integer;
     signal Reset            : std_logic;
 
-    signal pipeIn_signal_config    : PIPEIN_ARRAY;
-    signal pipeInSize_count_config : integer;
-    signal sck                     : STD_LOGIC;
-    signal cnv                     : STD_LOGIC;
-    signal sdo                     : STD_LOGIC;
-    signal sys_clk                 : std_logic;
+    signal pipeIn_signal_config      : PIPEIN_ARRAY;
+    signal pipeIn_signal_config_1    : PIPEIN_ARRAY;
+    signal pipeInSize_count_config   : integer;
+    signal pipeInSize_count_config_1 : integer;
+    signal sck                       : STD_LOGIC;
+    signal cnv                       : STD_LOGIC;
+    signal sdo                       : STD_LOGIC;
+    signal sys_clk                   : std_logic;
 
     ---------------------------------------------------------------------------------------------
 
@@ -233,6 +235,48 @@ begin
                 i_signal                       := i_signal + 1;
                 pipeIn_signal_config(i_signal) <= (others => '0');
                 i_signal                       := i_signal + 1;
+            else
+            --ep_write  <= '0';
+            end if;
+
+        end loop;                       ---------
+
+    end process;
+
+    label_read_file_config_1 : process
+        ------------------------------------------------------------------
+
+        file DONNEES_1      : text;
+        variable MY_LINE    : line;
+        variable data_1     : std_logic_vector(15 downto 0);
+        variable i_signal_1 : integer;
+        -------------------------------------------------------------------
+
+    begin                               -------------begin of process-----
+        file_open(DONNEES_1, "coef_HEX_V2_1.txt", read_mode);
+        --ep_write  <= '0';
+        --ep_dataout    <= (others => '0');
+        i_signal_1                := 0;
+        pipeInSize_count_config_1 <= 0;
+        wait until Reset = '0' and Reset'event;
+
+        loop
+
+            wait until (hi_clk = '1' and hi_clk'event);
+
+            if (not endfile(DONNEES_1)) then
+                --ep_write  <= '1';  
+                readline(DONNEES_1, MY_LINE);
+                hread(MY_LINE, data_1);
+                pipeInSize_count_config_1          <= pipeInSize_count_config_1 + 1;
+                pipeIn_signal_config_1(i_signal_1) <= data_1(7 downto 0);
+                i_signal_1                         := i_signal_1 + 1;
+                pipeIn_signal_config_1(i_signal_1) <= data_1(15 downto 8);
+                i_signal_1                         := i_signal_1 + 1;
+                pipeIn_signal_config_1(i_signal_1) <= (others => '0');
+                i_signal_1                         := i_signal_1 + 1;
+                pipeIn_signal_config_1(i_signal_1) <= (others => '0');
+                i_signal_1                         := i_signal_1 + 1;
             else
             --ep_write  <= '0';
             end if;
@@ -977,11 +1021,15 @@ begin
 
         wait for 10 us;
         pipeIn := pipeIn_signal_config;
-        WriteToPipeIn(x"81", pipeInSize_count_config * 4); --  0x80 config
+        WriteToPipeIn(x"81", pipeInSize_count_config * 4); --  0x81 config filter 0
+
+        wait for 10 us;
+        pipeIn := pipeIn_signal_config_1;
+        WriteToPipeIn(x"82", pipeInSize_count_config_1 * 4); --  0x82 config filter 1
 
         wait for 10 us;
         -- apply all
-        SetWireInValue(x"01", x"0000_8000", NO_MASK); -- set trig
+        SetWireInValue(x"01", x"0000_0001", NO_MASK); -- set trig
         UpdateWireIns;
 
         wait for 10 us;

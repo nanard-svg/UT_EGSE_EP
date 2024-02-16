@@ -14,7 +14,8 @@ indice=0
 lignes = []
 list_array_pipe_out_MSB = []
 list_array_pipe_out_LSB = []
-
+list_array_pipe_out_MSB_0 = []
+list_array_pipe_out_LSB_0 = []
 
 
 file_names = ['Signal_ADC_20keV.txt','Signal_ADC_200keV.txt','Signal_ADC_20keV.txt','Signal_ADC_200keV.txt','Signal_ADC_20keV.txt','Signal_ADC_200keV.txt','Signal_ADC_20keV.txt','Signal_ADC_200keV.txt']
@@ -147,6 +148,20 @@ list_pipe_in_array = np.array(formated_lines_coef)
 adresse=0x81
 des.setpipein(list_pipe_in_array,adresse)
 
+print ("Coef")
+file = open('coef_V2_1.txt', "r")
+lines_coef_1 = file.readlines()
+formated_lines_coef_1 = []
+for elm in lines_coef_1 :
+    formated_lines_coef_1.append(int(elm[:-1]))##la liste lines a des eleementr ascii dont on supprime\n avec :-1
+    #formated_lines.append(elm[:-1])
+
+#print("la liste coef est \n {}".format(formated_lines_coef))
+list_pipe_in_array_1 = np.array(formated_lines_coef_1)
+#print("le tableau coef est \n {}".format(list_pipe_in_array))
+adresse=0x82 # filter1
+des.setpipein(list_pipe_in_array_1,adresse)
+
 ###################################  SET LEVEL TRIGG  ###############################################
 print ("set trigger_level")
 #level_trig=0xFFFF8EB8
@@ -184,7 +199,7 @@ for c in range(20):
     des.getwire(adress_wire_out_science)
     while ((get != 1024) and (get != 512)):
         print("############################################")
-        print("read pointer  {}".format(get))
+        print("read pointer filter 0 0x20  {}".format(get))
         print("############################################")
         des.getwire(adress_wire_out_science)
 
@@ -192,33 +207,60 @@ for c in range(20):
     #print("read pointer  {}".format(get))
     #print("############################################")
 
+################################### TEST fifo pipe out read pointer FILTER 1 ##############################################
+    adress_wire_out_science = 0x23
+    des.getwire(adress_wire_out_science)
+    while ((get != 1024) and (get != 512)):
+        #print("############################################")
+        print("read pointer filter 1 0x23   {}".format(get))
+        #print("##############################################")
+        des.getwire(adress_wire_out_science)
+
+    print("############################################")
+    print("read pointer filter 1 0x23  {}".format(get))
+    print("############################################")
+
+################################ READ FIFO  Pipe out raw data science FILTER 1  #############################################
+    array_pipe_out = np.ones(get).astype(int)
+    adresse_pipe_out_read=0xA3
+    des.getpipeout(adresse_pipe_out_read)
+    #print(array_pipe_out.itemsize)
+    #print("print array_pipe_out  {}".format(array_pipe_out))
+    list_array_pipe_out = list(array_pipe_out)
+
 ################################ READ FIFO  Pipe out raw data science #############################################
     array_pipe_out = np.ones(get).astype(int)
     adresse_pipe_out_read=0xA1
     des.getpipeout(adresse_pipe_out_read)
     #print(array_pipe_out.itemsize)
     #print("print array_pipe_out  {}".format(array_pipe_out))
-    list_array_pipe_out = list(array_pipe_out)
+    list_array_pipe_out_0 = list(array_pipe_out)
 
 ################### SPLITE 32 bit Science from Pipe out ##########################################################
 
-    for elm in list_array_pipe_out :
-        #list_array_pipe_out_MSB.append(int(elm/2**16))
-        list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000)/2**16))
+    for elm in list_array_pipe_out:
+        # list_array_pipe_out_MSB.append(int(elm/2**16))
+        list_array_pipe_out_MSB.append(np.short((elm & 0xFFFF0000) / 2 ** 16))
         # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
         list_array_pipe_out_LSB.append(np.short(elm & 0xFFFF))
 
-    print("############################################")
-    print("indice de fichier{}:".format(indice))
-    print("max on output filter ", max(list_array_pipe_out_MSB))
-    print("min on output filter", min(list_array_pipe_out_MSB))
-    print("max-min on output filter", max(list_array_pipe_out_MSB)-min(list_array_pipe_out_MSB))
+    for elm in list_array_pipe_out_0 :
+        #list_array_pipe_out_MSB.append(int(elm/2**16))
+        list_array_pipe_out_MSB_0.append(np.short((elm & 0xFFFF0000)/2**16))
+        # list_array_pipe_out_LSB.append((int(elm*2**16))/2**16)
+        list_array_pipe_out_LSB_0.append(np.short(elm & 0xFFFF))
 
     print("############################################")
     print("indice de fichier{}:".format(indice))
-    print("max on input filter ", max(list_array_pipe_out_LSB))
-    print("min on input filter", min(list_array_pipe_out_LSB))
-    print("max-min on input filter", max(list_array_pipe_out_LSB) - min(list_array_pipe_out_LSB))
+    print("max on output filter ", max(list_array_pipe_out_MSB_0))
+    print("min on output filter", min(list_array_pipe_out_MSB_0))
+    print("max-min on output filter", max(list_array_pipe_out_MSB_0)-min(list_array_pipe_out_MSB_0))
+
+    print("############################################")
+    print("indice de fichier{}:".format(indice))
+    print("max on input filter ", max(list_array_pipe_out_LSB_0))
+    print("min on input filter", min(list_array_pipe_out_LSB_0))
+    print("max-min on input filter", max(list_array_pipe_out_LSB_0) - min(list_array_pipe_out_LSB_0))
 
 ############################ write "list_array_pipe_out file" in file indice name  ##########################################
     file_name_out = f"{indice}.txt"
@@ -228,8 +270,18 @@ for c in range(20):
     file.close()
     indice+=1
 
+    plt.subplot(211)
+    plt.plot(list_array_pipe_out_LSB_0)
+    plt.plot(list_array_pipe_out_MSB_0)
+    plt.title("Filter 0")
+    plt.xlabel("temps")
+    plt.ylabel("amplitude")
+    plt.subplot(212)
     plt.plot(list_array_pipe_out_LSB)
     plt.plot(list_array_pipe_out_MSB)
+    plt.title("Filter 1")
+    plt.xlabel("temps")
+    plt.ylabel("amplitude")
     plt.show()
 
 print("script done")

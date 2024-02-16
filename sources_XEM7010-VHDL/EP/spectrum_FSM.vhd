@@ -7,6 +7,7 @@ entity spectrum_FSM is
         -- global
         i_clk_slow                : in  std_logic;
         i_reset                   : in  std_logic;
+        i_filter_number           : in  std_logic_vector(0 downto 0);
         -- synchro_spectrum
         i_clk_synchro_spectrum    : in  std_logic;
         i_set_synchro_spectrum    : in  std_logic_vector(0 downto 0);
@@ -120,7 +121,7 @@ begin
 
                         when 0 =>       -- write ID
                             o_pipe_out_spectrum_wr_en <= '1';
-                            o_pipe_out_spectrum_din   <= x"0000000" & "000" & i_set_synchro_spectrum;
+                            o_pipe_out_spectrum_din   <= "000"&i_filter_number&x"00000" &"0000000" &i_set_synchro_spectrum;
                         --------------------------------------------------------
                         when 1 =>       -- write TimeMSB
                             o_pipe_out_spectrum_din <= x"AAAAAAAA";
