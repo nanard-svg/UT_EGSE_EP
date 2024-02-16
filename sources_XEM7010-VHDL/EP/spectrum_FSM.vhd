@@ -121,16 +121,16 @@ begin
 
                         when 0 =>       -- write ID
                             o_pipe_out_spectrum_wr_en <= '1';
-                            o_pipe_out_spectrum_din   <= "000"&i_filter_number&x"00000" &"0000000" &i_set_synchro_spectrum;
+                            o_pipe_out_spectrum_din   <= "1000"&"000"&i_filter_number&x"0000" &"0000000" &i_set_synchro_spectrum;
                         --------------------------------------------------------
                         when 1 =>       -- write TimeMSB
                             o_pipe_out_spectrum_din <= x"AAAAAAAA";
                         --------------------------------------------------------
                         when 2 =>       -- write T
-                            o_pipe_out_spectrum_din <= x"00000000";
+                            o_pipe_out_spectrum_din <= x"10000000";
                         --------------------------------------------------------
                         when 3 =>       -- write TimeLSB
-                            o_pipe_out_spectrum_din <= x"55555555";
+                            o_pipe_out_spectrum_din <= x"A5555555";
                         --------------------------------------------------------
                         when 4 to 5 =>
                             state                     <= first_data_to_gse;

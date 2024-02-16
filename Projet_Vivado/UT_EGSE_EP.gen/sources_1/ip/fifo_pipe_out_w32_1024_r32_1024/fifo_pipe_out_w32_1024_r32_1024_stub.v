@@ -1,7 +1,7 @@
 // Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2020.2 (win64) Build 3064766 Wed Nov 18 09:12:45 MST 2020
-// Date        : Fri Feb 16 11:03:58 2024
+// Date        : Fri Feb 16 12:23:36 2024
 // Host        : DESKTOP-3HC2UMC running 64-bit major release  (build 9200)
 // Command     : write_verilog -force -mode synth_stub
 //               c:/3Utransat/UT_EGSE_EP/Projet_Vivado/UT_EGSE_EP.gen/sources_1/ip/fifo_pipe_out_w32_1024_r32_1024/fifo_pipe_out_w32_1024_r32_1024_stub.v
